@@ -2,7 +2,7 @@
 ## CONFIGS
 Name : sys-init-starter
 Description : One-time bootstrap agent — runs the project's first-prompt setup, designs and creates the agent team, then is removed
-Status : ON
+Status : OFF
 Owns : **
 Created by : ai-project-starter
 Creation date : 2026-10-06 00:00:00
