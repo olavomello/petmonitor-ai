@@ -1,8 +1,28 @@
-# PetMonitor AI
+<p align="center">
+  <img src="assets/logo.png" alt="PetMonitor AI" width="180" />
+</p>
 
-> Privacy-first local pet activity monitoring — identifies, tracks, and reports on the daily behavior of Branca and Marrie (Shih Tzus) using computer vision on Blink security camera recordings.
+<h1 align="center">PetMonitor AI</h1>
 
-**Stack:** Python 3.11 · OpenCV · Ultralytics YOLO · BlinkPy · SQLite · FastAPI · React/TypeScript PWA (CPU-only, Windows 11)
+<p align="center">
+  Privacy-first local pet activity monitoring — identifies, tracks, and reports on the daily behavior of Branca and Marrie (Shih Tzus) using computer vision on Blink security camera recordings.
+</p>
+
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white" />
+  <img alt="YOLO" src="https://img.shields.io/badge/YOLO-Ultralytics-00FFFF?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PC9zdmc+" />
+  <img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-4.8+-5C3EE8?style=flat-square&logo=opencv&logoColor=white" />
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.111+-009688?style=flat-square&logo=fastapi&logoColor=white" />
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-local-003B57?style=flat-square&logo=sqlite&logoColor=white" />
+  <img alt="React" src="https://img.shields.io/badge/PWA-React%2FTS-61DAFB?style=flat-square&logo=react&logoColor=black" />
+  <br/>
+  <img alt="Tests" src="https://img.shields.io/badge/tests-32%20passed-brightgreen?style=flat-square&logo=pytest&logoColor=white" />
+  <img alt="Coverage" src="https://img.shields.io/badge/coverage-96%25-brightgreen?style=flat-square&logo=pytest&logoColor=white" />
+  <img alt="Version" src="https://img.shields.io/badge/version-0.0.1-blue?style=flat-square" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-green?style=flat-square" />
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%2011-0078D4?style=flat-square&logo=windows&logoColor=white" />
+  <img alt="CPU only" src="https://img.shields.io/badge/inference-CPU--only-orange?style=flat-square" />
+</p>
 
 ---
 
