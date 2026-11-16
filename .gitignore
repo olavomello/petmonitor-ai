@@ -1,0 +1,52 @@
+# Agent working state (task handoffs are local, not history)
+.agents/state/*
+!.agents/state/.gitkeep
+.agents/media/log.txt
+.agents/gate.conf
+.agents/locks/
+.agents/worktrees/
+.agents/log/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Personal Claude Code files (never shared)
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Dependencies
+node_modules/
+bower_components/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Build output and caches
+dist/
+build/
+target/
+.next/
+.nuxt/
+.turbo/
+.cache/
+.parcel-cache/
+.eslintcache
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor and OS files
+.idea/
+.DS_Store
+Thumbs.db
+
+# Keys and certificates (also denied to Claude Code in .claude/settings.json)
+*.pem
+*.key
+*.p12
+*.pfx
