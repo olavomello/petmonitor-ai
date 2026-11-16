@@ -164,11 +164,11 @@ class BlinkAdapter:
                 raise BlinkAuthError(f"Blink authentication failed: {exc_name}") from exc
 
         self._blink = blink
-        self._save_credentials(blink)
+        await self._save_credentials(blink)
         logger.info("Blink session started. Networks: %s", list(blink.networks.keys()))
 
     async def _handle_two_fa(self, blink: "Blink") -> "Blink":  # pragma: no cover
-        """Prompt the user for a 2FA code and complete authentication."""
+        """Prompt the user for a 2FA code and complete authentication (blinkpy 0.22+)."""
         print(
             "\nBlink requires two-factor authentication.\n"
             "A verification code was sent to your registered email or phone.\n",
@@ -176,18 +176,25 @@ class BlinkAdapter:
         )
         code = input("Enter 2FA code: ").strip()
         try:
-            await blink.auth.send_auth_key(blink, code)
-            await blink.setup_login_ids_and_cameras()
+            ok = await blink.auth.complete_2fa_login(code)
+            if not ok:
+                raise BlinkAuthError("Blink 2FA verification failed — wrong code?")
+            # setup_urls must be called before setup_post_verify because
+            # blink.start() raised before reaching it during the 2FA flow.
+            blink.setup_urls()
+            await blink.setup_post_verify()
+        except BlinkAuthError:
+            raise
         except Exception as exc:
             raise BlinkAuthError(f"Blink 2FA failed: {type(exc).__name__}") from exc
         return blink
 
-    def _save_credentials(self, blink: "Blink") -> None:  # pragma: no cover
+    async def _save_credentials(self, blink: "Blink") -> None:  # pragma: no cover
         """Persist auth state so the next run skips 2FA."""
         if not self._credentials_file:
             return
         self._credentials_file.parent.mkdir(parents=True, exist_ok=True)
-        blink.save(str(self._credentials_file))
+        await blink.save(str(self._credentials_file))
         logger.debug("Credentials saved → %s", self._credentials_file)
 
     async def list_cameras(self) -> list[CameraInfo]:  # pragma: no cover
