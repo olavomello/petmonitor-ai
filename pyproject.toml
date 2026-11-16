@@ -37,6 +37,8 @@ dev = [
 petmonitor-blink = "petmonitor.blink.cli:main"
 petmonitor-ingest = "petmonitor.ingestion.cli:main"
 petmonitor-sync = "petmonitor.sync.cli:main"
+petmonitor-track = "petmonitor.tracking.cli:main"
+petmonitor-api = "petmonitor.api.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
