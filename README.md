@@ -1,8 +1,8 @@
-# {{NAME}}
+# PetMonitor AI
 
-> {{PURPOSE}}
+> O PetMonitor AI utiliza inteligência artificial e visão computacional para identificar, monitorar e analisar automaticamente o comportamento e as atividades dos pets ao longo do dia.
 
-**Stack:** {{STACK}}
+**Stack:** Python 3.11 (CPU-only), OpenCV, Ultralytics YOLO, BlinkPy, SQLite; frontend PWA responsivo (React/TypeScript)
 
 <!-- The three {{...}} placeholders above are filled by `ai-project-starter init`. If you see them, fill them in by hand (and in AGENTS.md section 0). -->
 
@@ -29,9 +29,11 @@ Add your stack's install and run steps here, then mirror them in `.github/workfl
 
 | Task | Command |
 |---|---|
-| Install | _fill in_ |
-| Run locally | _fill in_ |
-| Build | _fill in_ |
+| Install (Python) | `python -m venv .venv && .venv\Scripts\activate && pip install -e ".[dev]"` |
+| Install (Frontend) | `cd frontend && npm install` |
+| Run API locally | `uvicorn petmonitor.api.main:app --reload` |
+| Run frontend | `cd frontend && npm run dev` |
+| Build frontend | `cd frontend && npm run build` |
 
 ## Verify your work
 

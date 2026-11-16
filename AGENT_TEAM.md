@@ -10,8 +10,8 @@ what lives there and why the two are split.
 ## CONFIGS
 
 ```
-auto_agents: ask
-main_merge:  ask
+auto_agents: true
+main_merge:  true
 ```
 
 ### auto_agents

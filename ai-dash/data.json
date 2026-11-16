@@ -1,4 +1,135 @@
 {
-  "generated_at": null,
-  "log_records": 0
+  "generated_at": "2026-11-16T20:43:42.124Z",
+  "log_records": 2,
+  "recent": [
+    {
+      "ts": "2026-11-16T20:43:41.869Z",
+      "task_type": "other",
+      "agent": "sys-init-starter",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 1083366,
+      "tokens_out": 8740
+    },
+    {
+      "ts": "2026-11-16T20:35:15.993Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "unknown",
+      "gate": "pass",
+      "tokens_in": 0,
+      "tokens_out": 0
+    }
+  ],
+  "totals": {
+    "executions": 2,
+    "tokens_in": 1083366,
+    "tokens_out": 8740,
+    "cache_read": 974871,
+    "cache_write": 108481,
+    "tool_calls": 12,
+    "duration_s": 0
+  },
+  "rates": {
+    "cache_read_ratio": 0.9,
+    "gate_pass": 1,
+    "gate_first_pass": 1
+  },
+  "cost": {
+    "usd": 0,
+    "priced_executions": 0,
+    "unpriced": 2
+  },
+  "pr_split": {
+    "mechanical": 0,
+    "administrator": 0
+  },
+  "by_day": [
+    {
+      "day": "2026-11-16",
+      "executions": 2,
+      "tokens_in": 1083366,
+      "tokens_out": 8740,
+      "cache_read": 974871,
+      "cache_write": 108481,
+      "tool_calls": 12,
+      "duration_s": 0
+    }
+  ],
+  "by_task": [
+    {
+      "task_type": "other",
+      "executions": 2,
+      "tokens_in": 1083366,
+      "tokens_out": 8740,
+      "cache_read": 974871,
+      "cache_write": 108481,
+      "tool_calls": 12,
+      "duration_s": 0,
+      "gate_pass": 2,
+      "gate_first": 2,
+      "gate_rated": 2,
+      "gate_first_pass": 1
+    }
+  ],
+  "by_agent": [
+    {
+      "agent": "sys-init-starter",
+      "executions": 1,
+      "tokens_in": 1083366,
+      "tokens_out": 8740,
+      "cache_read": 974871,
+      "cache_write": 108481,
+      "tool_calls": 12,
+      "duration_s": 0,
+      "gate_pass": 1,
+      "gate_first": 1,
+      "gate_rated": 1,
+      "gate_first_pass": 1
+    },
+    {
+      "agent": "main",
+      "executions": 1,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "tool_calls": 0,
+      "duration_s": 0,
+      "gate_pass": 1,
+      "gate_first": 1,
+      "gate_rated": 1,
+      "gate_first_pass": 1
+    }
+  ],
+  "by_model": [
+    {
+      "model": "claude-sonnet-4-6",
+      "executions": 1,
+      "tokens_in": 1083366,
+      "tokens_out": 8740,
+      "cache_read": 974871,
+      "cache_write": 108481,
+      "tool_calls": 12,
+      "duration_s": 0,
+      "gate_pass": 1,
+      "gate_first": 1,
+      "gate_rated": 1,
+      "gate_first_pass": 1
+    },
+    {
+      "model": "unknown",
+      "executions": 1,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "cache_read": 0,
+      "cache_write": 0,
+      "tool_calls": 0,
+      "duration_s": 0,
+      "gate_pass": 1,
+      "gate_first": 1,
+      "gate_rated": 1,
+      "gate_first_pass": 1
+    }
+  ]
 }
