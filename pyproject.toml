@@ -36,6 +36,7 @@ dev = [
 [project.scripts]
 petmonitor-blink = "petmonitor.blink.cli:main"
 petmonitor-ingest = "petmonitor.ingestion.cli:main"
+petmonitor-sync = "petmonitor.sync.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -45,6 +46,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = "--cov=petmonitor --cov-report=term-missing --cov-fail-under=80"
+filterwarnings = ["ignore:coroutine.*was never awaited:RuntimeWarning"]
 
 [tool.ruff]
 line-length = 100

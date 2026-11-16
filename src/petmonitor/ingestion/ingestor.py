@@ -93,6 +93,10 @@ class Ingestor:
         self._db_writer = db_writer
         self._clips_dir.mkdir(parents=True, exist_ok=True)
 
+    @property
+    def clips_dir(self) -> Path:
+        return self._clips_dir
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------

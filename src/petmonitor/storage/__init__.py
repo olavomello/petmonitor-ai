@@ -1,1 +1,3 @@
-"""storage module — not yet implemented (MVP 0 scaffold)."""
+from petmonitor.storage.database import Database
+
+__all__ = ["Database"]
