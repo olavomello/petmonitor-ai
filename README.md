@@ -1,229 +1,247 @@
 # PetMonitor AI
 
-> Monitoramento inteligente da Branca e da Marrie — identifica, rastreia e analisa automaticamente o comportamento de pets a partir de gravações de câmera de segurança, com visão computacional local e privacidade total.
+> Privacy-first local pet activity monitoring — identifies, tracks, and reports on the daily behavior of Branca and Marrie (Shih Tzus) using computer vision on Blink security camera recordings.
 
-**Stack:** Python 3.11 · OpenCV · Ultralytics YOLO · BlinkPy · SQLite · FastAPI · PWA React/TypeScript (CPU-only, Windows 11)
-
----
-
-## Sumário
-
-- [O que é](#o-que-é)
-- [Pré-requisitos](#pré-requisitos)
-- [Instalação](#instalação)
-- [Uso rápido](#uso-rápido)
-- [Verificação](#verificação)
-- [Estrutura do projeto](#estrutura-do-projeto)
-- [Como trabalhamos](#como-trabalhamos)
-- [Monitoramento](#monitoramento)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
+**Stack:** Python 3.11 · OpenCV · Ultralytics YOLO · BlinkPy · SQLite · FastAPI · React/TypeScript PWA (CPU-only, Windows 11)
 
 ---
 
-## O que é
+## Table of contents
 
-O **PetMonitor AI** usa visão computacional para analisar gravações da câmera Blink da sala de estar, identificar as Shih Tzus **Branca** e **Marrie**, e gerar relatórios honestos e mensuráveis sobre o que cada pet fez durante o dia.
-
-Tudo roda localmente: inferência, armazenamento e dashboard. Sem cloud obrigatório, sem dados enviados a terceiros.
-
-**MVP atual:** MVP 0 — ambiente configurado, adapter BlinkPy funcional, importação manual de MP4 garantida.
+- [What it does](#what-it-does)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Verification](#verification)
+- [Project layout](#project-layout)
+- [How we work](#how-we-work)
+- [Monitoring](#monitoring)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## Pré-requisitos
+## What it does
 
-| Requisito | Versão mínima | Observação |
+**PetMonitor AI** analyzes Blink camera recordings from the living room, identifies the two Shih Tzus **Branca** and **Marrie**, and produces honest, measurable reports on what each pet did during the day.
+
+Everything runs locally: inference, storage, and dashboard. No required cloud services, no data sent to third parties.
+
+**Current MVP:** MVP 0 — environment configured, BlinkPy adapter functional, manual MP4 import guaranteed.
+
+---
+
+## Prerequisites
+
+| Requirement | Min version | Notes |
 |---|---|---|
-| **Python** | 3.11 | Use o launcher `py -3.11` no Windows (`py -0` lista as versões instaladas) |
-| **Git** | qualquer | Necessário para clonar e para o `git bash` |
-| **Git Bash** | qualquer | **Obrigatório no Windows** para `scripts/*.sh` — o `bash` do PATH no PowerShell é o stub WSL e falha com `execvpe(/bin/bash) failed` |
-| **Node.js** | 18+ | Apenas para ferramentas de projeto (`scripts/*.mjs`, `ai-dash`) — não é necessário para a aplicação Python |
+| **Python** | 3.11 | Use the `py -3.11` launcher on Windows (`py -0` lists installed versions) |
+| **Git** | any | Required to clone; also ships Git Bash |
+| **Git Bash** | any | **Required on Windows** for `scripts/*.sh` — the PATH `bash` in PowerShell is the WSL stub and fails with `execvpe(/bin/bash) failed` |
+| **Node.js** | 18+ | Only for project tooling (`scripts/*.mjs`, `ai-dash`) — not required for the Python app |
 
-> **Windows:** instale o Git para Windows (inclui Git Bash). Ao rodar scripts de shell, use sempre "Git Bash" ou `"C:\Program Files\Git\bin\bash.exe"`, nunca o `bash` do PowerShell.
+> **Windows:** install Git for Windows (includes Git Bash). Always run shell scripts via Git Bash or `"C:\Program Files\Git\bin\bash.exe"`, never via the PowerShell `bash`.
 
 ---
 
-## Instalação
+## Installation
+
+> **Agent prompt** — set up the full Python environment in one shot:
+> ```
+> py -3.11 -m venv .venv && .venv\Scripts\pip install --upgrade pip setuptools wheel && .venv\Scripts\pip install -e ".[dev]"
+> ```
+
+### Clone
 
 ```bash
 git clone https://github.com/olavomello/petmonitor-ai.git
 cd petmonitor-ai
 ```
 
-### Python (backend + CLI)
+### Python backend + CLI
 
 ```bash
-# Criar venv com Python 3.11 (Windows — use o launcher py)
+# Create venv with Python 3.11 (Windows — use the py launcher)
 py -3.11 -m venv .venv
 
-# Ativar
+# Activate
 .venv\Scripts\activate          # PowerShell / CMD
-# ou: source .venv/Scripts/activate  # Git Bash
+# or: source .venv/Scripts/activate  # Git Bash
 
-# Instalar o pacote e dependências de desenvolvimento
+# Upgrade build tooling, then install package + dev dependencies
+pip install --upgrade pip setuptools wheel
 pip install -e ".[dev]"
 ```
 
-> Na primeira instalação, `ultralytics` baixa automaticamente os pesos do modelo YOLO (~6 MB para `yolov8n.pt`). Isso requer conexão à internet uma vez só.
+> On first install, `ultralytics` automatically downloads YOLO weights (~6 MB for `yolov8n.pt`). One-time internet connection required.
 
-### Variáveis de ambiente
+### Environment variables
 
 ```bash
 cp .env.example .env
-# Edite .env com suas credenciais Blink:
-#   BLINK_USERNAME=seu_email@exemplo.com
-#   BLINK_PASSWORD=sua_senha_blink
+# Edit .env with your Blink credentials:
+#   BLINK_USERNAME=your@email.com
+#   BLINK_PASSWORD=your_blink_password
 ```
 
-As credenciais ficam **apenas** no `.env` local — nunca são commitadas.
+Credentials stay **only** in the local `.env` — never committed.
 
-### Frontend (MVP 4 — ainda não implementado)
+### Frontend (MVP 4 — not yet implemented)
 
 ```bash
-cd frontend && npm install   # aguarda implementação do MVP 4
+cd frontend && npm install   # pending MVP 4
 ```
 
 ---
 
-## Uso rápido
+## Quick start
 
-### Importar um clipe MP4 manualmente (sem câmera)
+> **Agent prompt** — import a local clip and verify the pipeline:
+> ```
+> .venv\Scripts\petmonitor-ingest --file <path/to/clip.mp4>
+> ```
 
-O caminho manual é o fallback garantido e funciona sem câmera ou credenciais:
+### Import an MP4 clip manually (no camera required)
+
+The manual path is the guaranteed fallback and works without a camera or credentials:
 
 ```bash
-petmonitor-ingest --file caminho/para/clip.mp4
-# Opcionalmente com timestamp de captura:
+petmonitor-ingest --file path/to/clip.mp4
+# Optionally with a capture timestamp:
 petmonitor-ingest --file clip.mp4 --capture-at 2026-11-16T10:00:00Z
 ```
 
-### Verificar conectividade com a câmera Blink
+### Check Blink camera connectivity
 
 ```bash
-# Requer .env preenchido com BLINK_USERNAME e BLINK_PASSWORD
+# Requires .env populated with BLINK_USERNAME and BLINK_PASSWORD
 petmonitor-blink
-# Para uma câmera específica:
+# For a specific camera:
 petmonitor-blink --camera "Living Room"
 ```
 
-### Rodar a API local (MVP 2+)
+### Run the local API (MVP 2+)
 
 ```bash
 uvicorn petmonitor.api.main:app --reload
-# Acesse: http://127.0.0.1:8000/docs
-# A API fica vinculada ao localhost por padrão — não é exposta publicamente.
+# Open: http://127.0.0.1:8000/docs
+# API binds to localhost only — not publicly exposed.
 ```
 
 ---
 
-## Verificação
+## Verification
 
-`scripts/gate.sh` é o único comando de verificação: testes, cobertura e version gate em um só passo. Humanos e agentes rodam antes de todo commit.
+> **Agent prompt** — run the full gate before every commit:
+> ```
+> "C:\Program Files\Git\bin\bash.exe" scripts/gate.sh
+> ```
+
+`scripts/gate.sh` is the single verification command: tests, coverage, and version gate in one step. Both humans and agents run it before every commit.
 
 ```bash
-# Windows — use sempre Git Bash, nunca o bash do PowerShell
+# Windows — always use Git Bash, never the PowerShell bash
 "C:\Program Files\Git\bin\bash.exe" scripts/gate.sh
 
-# Com checagens de release:
+# With release checks:
 "C:\Program Files\Git\bin\bash.exe" scripts/gate.sh --release
 ```
 
-O gate está configurado em `.agents/gate.conf` para usar o pytest do `.venv`. Se o `.venv` não existir, crie-o antes (ver [Instalação](#instalação)).
+The gate is configured in `.agents/gate.conf` to use the pytest from `.venv`. If `.venv` does not exist, create it first (see [Installation](#installation)).
 
-**Estado atual:** 32 testes, 96% de cobertura — ✅ gate passa.
+**Current state:** 32 tests, 96% coverage — ✅ gate passes.
 
 ---
 
-## Estrutura do projeto
+## Project layout
 
 ```
 petmonitor-ai/
-├── src/petmonitor/           # Pacote Python principal
-│   ├── blink/                # Adapter BlinkPy (auth, discovery, download)
-│   ├── ingestion/            # Intake de clipes, dedup SHA-256, proveniência
+├── src/petmonitor/           # Main Python package
+│   ├── blink/                # BlinkPy adapter (auth, discovery, download)
+│   ├── ingestion/            # Clip intake, SHA-256 dedup, provenance
 │   ├── vision/               # OpenCV + YOLO detection (MVP 1)
-│   ├── tracking/             # Tracking + identidade Branca/Marrie (MVP 2)
-│   ├── activities/           # Analytics, heatmaps, trajetórias (MVP 3)
-│   ├── storage/              # SQLite schema e camada de dados (MVP 1+)
+│   ├── tracking/             # Tracking + Branca/Marrie identity (MVP 2)
+│   ├── activities/           # Analytics, heatmaps, trajectories (MVP 3)
+│   ├── storage/              # SQLite schema and data layer (MVP 1+)
 │   └── api/                  # FastAPI local — localhost only (MVP 2+)
 │
-├── frontend/                 # PWA React/TypeScript (MVP 4)
-├── tests/                    # pytest — 32 testes, 96% cobertura
+├── frontend/                 # React/TypeScript PWA (MVP 4)
+├── tests/                    # pytest — 32 tests, 96% coverage
 ├── configs/
-│   ├── app.yaml              # Configuração runtime (storage, detection, API, pets)
-│   └── dataset.yaml          # Configuração YOLO dataset (Branca=0, Marrie=1)
+│   ├── app.yaml              # Runtime config (storage, detection, API, pets)
+│   └── dataset.yaml          # YOLO dataset config (Branca=0, Marrie=1)
 │
-├── scripts/                  # Ferramentas de projeto (gate, agentes, ADR, ai-dash)
+├── scripts/                  # Project tooling (gate, agents, ADR, ai-dash)
 ├── docs/
-│   ├── agents/               # Definições dos 10 agentes
+│   ├── agents/               # Definitions for all 10 agents
 │   ├── adr/                  # Architecture Decision Records
-│   ├── repo-map.md           # Mapa do repositório
-│   └── decisions.md          # Log de decisões arquiteturais
+│   ├── repo-map.md           # Repository map
+│   └── decisions.md          # Architectural decision log
 │
 ├── concept/
-│   ├── concept.md            # Especificação completa do produto
-│   ├── dashboard.png         # Design aprovado — desktop
-│   └── app.png               # Design aprovado — mobile/PWA
+│   ├── concept.md            # Full product specification
+│   ├── dashboard.png         # Approved design — desktop
+│   └── app.png               # Approved design — mobile/PWA
 │
-├── assets/                   # Brand e PWA assets (logo, ícones, manifest)
-├── ai-dash/                  # Dashboard estático de monitoramento de agentes
-├── .env.example              # Template de variáveis de ambiente
-├── pyproject.toml            # Metadados e dependências do pacote Python
-├── AGENTS.md                 # Regras vinculantes para todos os agentes
-├── AGENT_TEAM.md             # Política e protocolo dos 10 agentes
-├── VERSION                   # Versão SemVer (fonte da verdade)
-└── CHANGELOG.md              # Histórico Keep a Changelog
+├── assets/                   # Brand and PWA assets (logo, icons, manifest)
+├── ai-dash/                  # Static agent-monitoring dashboard
+├── .env.example              # Environment variable template
+├── pyproject.toml            # Python package metadata and dependencies
+├── AGENTS.md                 # Binding rules for all agents
+├── AGENT_TEAM.md             # Policy and protocol for the 10-agent team
+├── VERSION                   # SemVer source of truth
+└── CHANGELOG.md              # Keep a Changelog history
 ```
 
-**Diretórios git-ignorados** (dados locais, nunca commitados):
+**Git-ignored directories** (local data, never committed):
 
-| Diretório | Conteúdo |
+| Directory | Contents |
 |---|---|
-| `data/` | Clipes baixados, snapshots, `petmonitor.db` |
-| `datasets/` | Imagens e labels para treino do modelo |
-| `models/` | Pesos treinados |
-| `runs/` | Artefatos de runs de treino/avaliação |
-| `.venv/` | Ambiente virtual Python |
+| `data/` | Downloaded clips, snapshots, `petmonitor.db` |
+| `datasets/` | Training images and labels |
+| `models/` | Trained model weights |
+| `runs/` | Training/evaluation run artifacts |
+| `.venv/` | Python virtual environment |
 
 ---
 
-## Como trabalhamos
+## How we work
 
-- **Regras primeiro.** Agentes leem `AGENTS.md`; abrem `docs/agents/*` e `docs/guides/*` só quando a tarefa toca aquela área.
-- **Um caminho de verificação.** Nada está "pronto" até `scripts/gate.sh` passar.
-- **Decisões são registradas.** Mudanças arquiteturais geram um ADR: `node scripts/adr.mjs new "<título>"` (ver `docs/adr/`).
-- **Versionamento é SemVer.** `VERSION` e entradas de release em `CHANGELOG.md` são de responsabilidade do agente principal; mudanças visíveis ao usuário vão em `[Unreleased]`.
-- **Agentes trabalham em isolamento.** Agentes paralelos usam seus próprios worktrees (`bash scripts/agent-team.sh list`).
-- **10 agentes especializados.** Cada módulo tem um agente dono: `@agent-dev-blink-integrator`, `@agent-dev-vision-detector`, `@agent-dev-ui-builder`, etc. Ver `AGENT_TEAM.md`.
+- **Rules first.** Agents read `AGENTS.md`; they open `docs/agents/*` and `docs/guides/*` only when the task touches that area.
+- **One verification path.** Nothing is "done" until `scripts/gate.sh` passes.
+- **Decisions are recorded.** Architectural changes get an ADR: `node scripts/adr.mjs new "<title>"` (see `docs/adr/`).
+- **SemVer.** `VERSION` and release entries in `CHANGELOG.md` are owned by the main agent; user-visible changes go under `[Unreleased]`.
+- **Agents work in isolation.** Parallel agents use their own worktrees (`bash scripts/agent-team.sh list`).
+- **10 specialized agents.** Each module has an owner: `@agent-dev-blink-integrator`, `@agent-dev-vision-detector`, `@agent-dev-ui-builder`, etc. See `AGENT_TEAM.md`.
 
 ---
 
-## Monitoramento
+## Monitoring
 
-Cada execução do gate é registrada localmente e agregada para o dashboard:
+Each gate run is logged locally and aggregated for the dashboard:
 
 ```bash
-node scripts/ai-dash.mjs   # Serve ai-dash/ em 127.0.0.1 com área de Settings
+node scripts/ai-dash.mjs   # Serves ai-dash/ on 127.0.0.1 with a Settings area
 ```
 
-`ai-dash/` é um site estático e pode ser publicado como página interna de monitoramento. Ver `ai-dash/README.md`.
+`ai-dash/` is a static site and can be published as an internal monitoring page. See `ai-dash/README.md`.
 
 ---
 
-## Contribuindo
+## Contributing
 
-1. Crie um branch a partir de `main` seguindo o modelo em `AGENTS.md` seção 0.
-2. Faça uma mudança focada e adicione ou atualize testes.
-3. Execute `"C:\Program Files\Git\bin\bash.exe" scripts/gate.sh` até passar.
-4. Adicione uma linha em `[Unreleased]` no `CHANGELOG.md` para qualquer mudança visível ao usuário.
-5. Abra um pull request.
+1. Branch from `main` following the model in `AGENTS.md` section 0.
+2. Make a focused change and add or update tests.
+3. Run `"C:\Program Files\Git\bin\bash.exe" scripts/gate.sh` until it passes.
+4. Add a line under `[Unreleased]` in `CHANGELOG.md` for any user-visible change.
+5. Open a pull request.
 
 ---
 
-## Licença
+## License
 
-MIT — ver [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
 
 ---
 
