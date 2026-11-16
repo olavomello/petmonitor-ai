@@ -50,6 +50,9 @@ async def _run(args: argparse.Namespace) -> "SyncResult":  # pragma: no cover
     from pathlib import Path
 
     import yaml
+    from dotenv import load_dotenv
+
+    load_dotenv()
 
     from petmonitor.blink.adapter import BlinkAdapter
     from petmonitor.ingestion.ingestor import Ingestor
@@ -63,6 +66,7 @@ async def _run(args: argparse.Namespace) -> "SyncResult":  # pragma: no cover
     storage = cfg.get("storage", {})
     clips_dir = Path(args.clips_dir or storage.get("clips_dir", "data/clips"))
     db_path = Path(args.db or storage.get("db_path", "data/petmonitor.db"))
+    creds_file = Path(cfg.get("blink", {}).get("credentials_file", "data/.blink_creds.json"))
 
     db = Database(db_path)
     db.connect()
@@ -71,7 +75,7 @@ async def _run(args: argparse.Namespace) -> "SyncResult":  # pragma: no cover
     ingestor = Ingestor(clips_dir=clips_dir, db_writer=db)
     detector = None if args.no_detect else Detector.from_config(cfg)
 
-    async with BlinkAdapter.from_env() as adapter:
+    async with BlinkAdapter.from_env(credentials_file=creds_file) as adapter:
         syncer = Syncer(adapter=adapter, ingestor=ingestor, db=db, detector=detector)
         result = await syncer.run(camera_name=args.camera, detect=not args.no_detect)
 

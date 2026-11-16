@@ -32,6 +32,8 @@ blink:
   timeout: 30
   # Maximum clip age in hours to download (0 = no limit)
   max_clip_age_hours: 24
+  # Saved auth state — avoids 2FA on every run; never commit this file
+  credentials_file: data/.blink_creds.json
 
 api:
   host: "127.0.0.1"

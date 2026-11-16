@@ -125,33 +125,70 @@ class BlinkAdapter:
         self._blink = None
 
     async def _connect(self) -> None:  # pragma: no cover
-        """Authenticate with Blink and start the session."""
+        """Authenticate with Blink and start the session.
+
+        Handles Two-Factor Authentication interactively: if Blink requires a
+        verification code, the user is prompted on stdout/stdin, then the code
+        is submitted and credentials are saved to ``credentials_file`` so that
+        subsequent runs skip 2FA.
+        """
         if not BLINKPY_AVAILABLE:
             raise BlinkUnavailableError(
                 "blinkpy is not installed. Run: pip install blinkpy"
             )
 
         logger.info("Connecting to Blink API…")
-        try:
-            creds: dict = {}
-            if self._credentials_file and self._credentials_file.exists():
-                creds = json_load(str(self._credentials_file)) or {}
+        creds: dict = {}
+        if self._credentials_file and self._credentials_file.exists():
+            creds = json_load(str(self._credentials_file)) or {}
 
-            auth = Auth(
-                {
-                    "username": self._username,
-                    "password": self._password,
-                    **creds,
-                }
-            )
-            blink = Blink(session=None)
-            blink.auth = auth
+        auth = Auth(
+            {
+                "username": self._username,
+                "password": self._password,
+                **creds,
+            }
+        )
+        blink = Blink(session=None)
+        blink.auth = auth
+
+        try:
             await blink.start()
-            self._blink = blink
-            logger.info("Blink session started. Networks: %s", list(blink.networks.keys()))
         except Exception as exc:
-            # Sanitize: never let the exception message include passwords or tokens.
-            raise BlinkAuthError(f"Blink authentication failed: {type(exc).__name__}") from exc
+            exc_name = type(exc).__name__
+            # blinkpy raises *TwoFA* or *Unauthorized* variants when 2FA is required.
+            if any(kw in exc_name for kw in ("TwoFA", "2FA", "Unauthorized")):
+                blink = await self._handle_two_fa(blink)
+            else:
+                # Sanitize: never surface passwords or tokens in the error.
+                raise BlinkAuthError(f"Blink authentication failed: {exc_name}") from exc
+
+        self._blink = blink
+        self._save_credentials(blink)
+        logger.info("Blink session started. Networks: %s", list(blink.networks.keys()))
+
+    async def _handle_two_fa(self, blink: "Blink") -> "Blink":  # pragma: no cover
+        """Prompt the user for a 2FA code and complete authentication."""
+        print(
+            "\nBlink requires two-factor authentication.\n"
+            "A verification code was sent to your registered email or phone.\n",
+            flush=True,
+        )
+        code = input("Enter 2FA code: ").strip()
+        try:
+            await blink.auth.send_auth_key(blink, code)
+            await blink.setup_login_ids_and_cameras()
+        except Exception as exc:
+            raise BlinkAuthError(f"Blink 2FA failed: {type(exc).__name__}") from exc
+        return blink
+
+    def _save_credentials(self, blink: "Blink") -> None:  # pragma: no cover
+        """Persist auth state so the next run skips 2FA."""
+        if not self._credentials_file:
+            return
+        self._credentials_file.parent.mkdir(parents=True, exist_ok=True)
+        blink.save(str(self._credentials_file))
+        logger.debug("Credentials saved → %s", self._credentials_file)
 
     async def list_cameras(self) -> list[CameraInfo]:  # pragma: no cover
         """Return all cameras found in the account."""
