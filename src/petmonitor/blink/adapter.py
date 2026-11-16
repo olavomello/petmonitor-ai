@@ -140,7 +140,7 @@ class BlinkAdapter:
         logger.info("Connecting to Blink API…")
         creds: dict = {}
         if self._credentials_file and self._credentials_file.exists():
-            creds = json_load(str(self._credentials_file)) or {}
+            creds = await json_load(str(self._credentials_file)) or {}
 
         auth = Auth(
             {
