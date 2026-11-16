@@ -50,3 +50,25 @@ Thumbs.db
 *.key
 *.p12
 *.pfx
+
+# PetMonitor AI — local data, ML artifacts (never commit)
+datasets/
+data/
+models/
+runs/
+*.db
+*.sqlite
+
+# Python distribution / packaging
+*.egg-info/
+*.egg
+dist/
+*.whl
+
+# Virtual environment (supplement to .venv/ above)
+env/
+.Python
+
+# Pytest coverage
+.coverage
+htmlcov/

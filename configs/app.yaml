@@ -1,0 +1,50 @@
+# PetMonitor AI — application configuration
+# All values are defaults; override via environment variables or CLI flags.
+# See .env.example for environment variable names.
+
+storage:
+  data_dir: data
+  db_path: data/petmonitor.db
+  clips_dir: data/clips
+  snapshots_dir: data/snapshots
+  # Clip retention in days (0 = keep forever)
+  clip_retention_days: 0
+  # Snapshot retention in days (0 = keep forever)
+  snapshot_retention_days: 30
+
+detection:
+  # Path to YOLO model weights (relative to project root or absolute)
+  # Leave blank to use Ultralytics default (downloads yolov8n.pt on first run)
+  model_path: ""
+  # Confidence threshold for detections (0.0 – 1.0)
+  confidence_threshold: 0.40
+  # Frame sampling: process every N-th frame (1 = every frame, 5 = every 5th)
+  frame_sample_rate: 5
+  # YOLO device: "cpu" only on this hardware (Intel Iris Plus, no NVIDIA GPU)
+  device: "cpu"
+  # YOLO class IDs to filter (COCO: 15=cat, 16=dog; null = all classes)
+  filter_classes: [16]  # dog class in COCO
+
+blink:
+  # Camera name to use (null = use first discovered camera)
+  camera_name: null
+  # Timeout in seconds for Blink API calls
+  timeout: 30
+  # Maximum clip age in hours to download (0 = no limit)
+  max_clip_age_hours: 24
+
+api:
+  host: "127.0.0.1"
+  port: 8000
+  # Never set to 0.0.0.0 without explicit auth/authz — see AGENTS.md §2 security rules
+  reload: false
+
+pets:
+  - id: 1
+    name: Branca
+    class_id: 0
+    color: "#00B4D8"  # teal
+  - id: 2
+    name: Marrie
+    class_id: 1
+    color: "#9B59B6"  # purple

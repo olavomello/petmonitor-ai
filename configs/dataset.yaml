@@ -1,0 +1,18 @@
+# PetMonitor AI — YOLO dataset configuration
+# Used by scripts/train.py and mlo-model-trainer agent.
+# See concept.md §9 for dataset layout.
+
+path: ../datasets  # relative to this file's location (configs/); adjust for your YOLO version
+train: images/train
+val: images/val
+test: images/test
+
+nc: 2  # number of classes
+names:
+  0: Branca
+  1: Marrie
+
+# Notes:
+# - Resolve 'path' relative to the YOLO library's documented behavior before training.
+# - Validate by running `yolo data check data=configs/dataset.yaml` before the first training run.
+# - Labels use YOLO format: class_id cx cy w h (normalized 0–1).
