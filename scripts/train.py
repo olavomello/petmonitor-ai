@@ -88,7 +88,8 @@ def main() -> None:  # pragma: no cover
         )
 
         # Copy best weights to models/
-        best_src = logger.run_dir / "yolo" / "weights" / "best.pt"
+        # results.save_dir is the actual directory Ultralytics used (it may add runs/detect/ prefix)
+        best_src = Path(str(results.save_dir)) / "weights" / "best.pt"
         models_dir = Path(cfg.models_dir)
         models_dir.mkdir(parents=True, exist_ok=True)
         best_dst = models_dir / "best.pt"
