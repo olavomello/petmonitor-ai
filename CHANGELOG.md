@@ -5,6 +5,7 @@ The format follows Keep a Changelog, and this project adheres to Semantic Versio
 
 ## [Unreleased]
 ### Added
+- ADR 0006: decision to make pet identity generic and user-defined — generic COCO dog/cat detection plus per-household appearance re-identification — replacing the hardcoded custom-class (Branca/Marrie) coupling.
 - Initial project structure from ai-project-starter.
 - MVP 1: SQLite storage layer (`Database`) with clips and detections tables.
 - MVP 1: YOLO-based `Detector` — CPU-only inference over sampled video frames.
