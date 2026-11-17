@@ -67,6 +67,7 @@ async def _run(args: argparse.Namespace) -> "SyncResult":  # pragma: no cover
     clips_dir = Path(args.clips_dir or storage.get("clips_dir", "data/clips"))
     db_path = Path(args.db or storage.get("db_path", "data/petmonitor.db"))
     creds_file = Path(cfg.get("blink", {}).get("credentials_file", "data/.blink_creds.json"))
+    max_age = cfg.get("blink", {}).get("max_clip_age_hours", 0)
 
     db = Database(db_path)
     db.connect()
@@ -77,7 +78,11 @@ async def _run(args: argparse.Namespace) -> "SyncResult":  # pragma: no cover
 
     async with BlinkAdapter.from_env(credentials_file=creds_file) as adapter:
         syncer = Syncer(adapter=adapter, ingestor=ingestor, db=db, detector=detector)
-        result = await syncer.run(camera_name=args.camera, detect=not args.no_detect)
+        result = await syncer.run(
+            camera_name=args.camera,
+            detect=not args.no_detect,
+            max_age_hours=max_age,
+        )
 
     db.close()
     return result

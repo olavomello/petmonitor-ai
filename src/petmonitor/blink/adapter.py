@@ -217,7 +217,7 @@ class BlinkAdapter:
     async def list_clips(  # pragma: no cover
         self,
         camera_name: Optional[str] = None,
-        max_age_hours: int = 24,
+        max_age_hours: int = 0,
     ) -> list[ClipInfo]:
         """Return available clips for a camera.
 
@@ -236,10 +236,27 @@ class BlinkAdapter:
         cam = self._resolve_camera(camera_name)
         clips: list[ClipInfo] = []
 
-        # blinkpy 0.22+ exposes `camera.clips` as a list of dicts with 'url'/'created_at'.
-        raw_clips = getattr(cam, "clips", None) or []
+        # Primary: use the account-level media API (works for owl/mini cameras).
+        # time=0 → since epoch → returns all stored clips regardless of age.
+        raw_clips: list = []
+        base_url = getattr(getattr(self._blink, "urls", None), "base_url", "")
+        try:
+            from blinkpy.api import request_videos
+
+            response = await request_videos(self._blink, time=0)
+            media = (response or {}).get("media", [])
+            # Filter to this camera only when a name was specified.
+            if camera_name:
+                raw_clips = [m for m in media if m.get("camera_name") == cam.name]
+            else:
+                raw_clips = list(media)
+        except Exception as exc:
+            logger.debug("request_videos failed (%s); falling back to cam.clips", exc)
+
+        # Fallback: camera.clips attribute (populated by some blinkpy flows).
         if not raw_clips:
-            # Some accounts expose clips through the network homescreen endpoint.
+            raw_clips = getattr(cam, "clips", None) or []
+        if not raw_clips:
             raw_clips = getattr(self._blink, "homescreen", {}).get("clips", [])
 
         cutoff = None
@@ -248,7 +265,9 @@ class BlinkAdapter:
 
         for entry in raw_clips:
             if isinstance(entry, dict):
-                url = entry.get("url", "")
+                # Media API returns "address" (relative path); cam.clips uses "url".
+                address = entry.get("address", entry.get("url", ""))
+                url = (base_url + address) if address.startswith("/") else address
                 ts_str = entry.get("created_at", "")
             else:
                 url = getattr(entry, "url", "")

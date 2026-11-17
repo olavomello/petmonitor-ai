@@ -50,13 +50,16 @@ class Syncer:
         self,
         camera_name: str | None = None,
         detect: bool = True,
+        max_age_hours: int = 0,
     ) -> SyncResult:
         """Run one full sync cycle and return a summary."""
         result = SyncResult()
         dest = self._ingestor.clips_dir
 
         try:
-            clips = await self._adapter.list_clips(camera_name=camera_name)
+            clips = await self._adapter.list_clips(
+                camera_name=camera_name, max_age_hours=max_age_hours
+            )
         except Exception as exc:  # pragma: no cover — network errors
             logger.error("Failed to list clips: %s", exc)
             result.errors.append(str(exc))

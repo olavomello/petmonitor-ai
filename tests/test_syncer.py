@@ -174,6 +174,20 @@ async def test_sync_error_in_one_clip_continues_others() -> None:
 
 
 @pytest.mark.asyncio
+async def test_sync_max_age_hours_forwarded_to_adapter() -> None:
+    syncer = _make_syncer(clips=[])
+    await syncer.run(max_age_hours=48)
+    syncer._adapter.list_clips.assert_called_once_with(camera_name=None, max_age_hours=48)
+
+
+@pytest.mark.asyncio
+async def test_sync_max_age_hours_default_is_zero() -> None:
+    syncer = _make_syncer(clips=[])
+    await syncer.run()
+    syncer._adapter.list_clips.assert_called_once_with(camera_name=None, max_age_hours=0)
+
+
+@pytest.mark.asyncio
 async def test_sync_multiple_clips_counted_correctly() -> None:
     clips = [_make_clip(f"url{i}") for i in range(3)]
 
