@@ -106,14 +106,5 @@
   },
   "enabledPlugins": {
     "ai-dash@ai-project-starter": true
-  },
-  "extraKnownMarketplaces": {
-    "ai-project-starter": {
-      "source": {
-        "source": "github",
-        "repo": "olavomello/ai-project-starter",
-        "ref": "main"
-      }
-    }
   }
 }

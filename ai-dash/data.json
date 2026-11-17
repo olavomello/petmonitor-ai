@@ -1,44 +1,116 @@
 {
-  "generated_at": "2026-11-16T21:55:48.931Z",
-  "log_records": 2,
+  "generated_at": "2026-11-17T05:48:32.547Z",
+  "log_records": 32,
   "recent": [
     {
-      "ts": "2026-11-16T20:43:41.869Z",
-      "task_type": "other",
-      "agent": "sys-init-starter",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 1083366,
-      "tokens_out": 8740
-    },
-    {
-      "ts": "2026-11-16T20:35:15.993Z",
+      "ts": "2026-11-17T05:48:32.414Z",
       "task_type": "other",
       "agent": "main",
-      "model": "unknown",
+      "model": "claude-sonnet-4-6",
       "gate": "pass",
-      "tokens_in": 0,
-      "tokens_out": 0
+      "tokens_in": 3089437,
+      "tokens_out": 10038
+    },
+    {
+      "ts": "2026-11-17T05:43:49.182Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 2780929,
+      "tokens_out": 7208
+    },
+    {
+      "ts": "2026-11-17T05:39:08.031Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 5656034,
+      "tokens_out": 31598
+    },
+    {
+      "ts": "2026-11-17T05:25:10.310Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 1173442,
+      "tokens_out": 3487
+    },
+    {
+      "ts": "2026-11-17T05:21:54.193Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 6354029,
+      "tokens_out": 62537
+    },
+    {
+      "ts": "2026-11-17T04:59:55.799Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 4160321,
+      "tokens_out": 12846
+    },
+    {
+      "ts": "2026-11-17T04:53:15.033Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 3889576,
+      "tokens_out": 14472
+    },
+    {
+      "ts": "2026-11-17T04:48:08.392Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 10062178,
+      "tokens_out": 52268
+    },
+    {
+      "ts": "2026-11-17T04:04:50.323Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 25548593,
+      "tokens_out": 89548
+    },
+    {
+      "ts": "2026-11-17T02:32:57.328Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 1761574,
+      "tokens_out": 7982
     }
   ],
   "totals": {
-    "executions": 2,
-    "tokens_in": 1083366,
-    "tokens_out": 8740,
-    "cache_read": 974871,
-    "cache_write": 108481,
-    "tool_calls": 12,
-    "duration_s": 0
+    "executions": 32,
+    "tokens_in": 106528926,
+    "tokens_out": 517686,
+    "cache_read": 104883784,
+    "cache_write": 1644208,
+    "tool_calls": 976,
+    "duration_s": 11792
   },
   "rates": {
-    "cache_read_ratio": 0.9,
-    "gate_pass": 1,
-    "gate_first_pass": 1
+    "cache_read_ratio": 0.985,
+    "gate_pass": 0.938,
+    "gate_first_pass": 0.875
   },
   "cost": {
     "usd": 0,
     "priced_executions": 0,
-    "unpriced": 2
+    "unpriced": 32
   },
   "pr_split": {
     "mechanical": 0,
@@ -47,32 +119,56 @@
   "by_day": [
     {
       "day": "2026-11-16",
-      "executions": 2,
-      "tokens_in": 1083366,
-      "tokens_out": 8740,
-      "cache_read": 974871,
-      "cache_write": 108481,
-      "tool_calls": 12,
-      "duration_s": 0
+      "executions": 15,
+      "tokens_in": 27334518,
+      "tokens_out": 148162,
+      "cache_read": 26883593,
+      "cache_write": 450679,
+      "tool_calls": 234,
+      "duration_s": 2703
+    },
+    {
+      "day": "2026-11-17",
+      "executions": 17,
+      "tokens_in": 79194408,
+      "tokens_out": 369524,
+      "cache_read": 78000191,
+      "cache_write": 1193529,
+      "tool_calls": 742,
+      "duration_s": 9089
     }
   ],
   "by_task": [
     {
       "task_type": "other",
-      "executions": 2,
-      "tokens_in": 1083366,
-      "tokens_out": 8740,
-      "cache_read": 974871,
-      "cache_write": 108481,
-      "tool_calls": 12,
-      "duration_s": 0,
-      "gate_pass": 2,
-      "gate_first": 2,
-      "gate_rated": 2,
-      "gate_first_pass": 1
+      "executions": 32,
+      "tokens_in": 106528926,
+      "tokens_out": 517686,
+      "cache_read": 104883784,
+      "cache_write": 1644208,
+      "tool_calls": 976,
+      "duration_s": 11792,
+      "gate_pass": 30,
+      "gate_first": 28,
+      "gate_rated": 32,
+      "gate_first_pass": 0.875
     }
   ],
   "by_agent": [
+    {
+      "agent": "main",
+      "executions": 31,
+      "tokens_in": 105445560,
+      "tokens_out": 508946,
+      "cache_read": 103908913,
+      "cache_write": 1535727,
+      "tool_calls": 964,
+      "duration_s": 11792,
+      "gate_pass": 29,
+      "gate_first": 27,
+      "gate_rated": 31,
+      "gate_first_pass": 0.871
+    },
     {
       "agent": "sys-init-starter",
       "executions": 1,
@@ -81,20 +177,6 @@
       "cache_read": 974871,
       "cache_write": 108481,
       "tool_calls": 12,
-      "duration_s": 0,
-      "gate_pass": 1,
-      "gate_first": 1,
-      "gate_rated": 1,
-      "gate_first_pass": 1
-    },
-    {
-      "agent": "main",
-      "executions": 1,
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "cache_read": 0,
-      "cache_write": 0,
-      "tool_calls": 0,
       "duration_s": 0,
       "gate_pass": 1,
       "gate_first": 1,
@@ -105,17 +187,17 @@
   "by_model": [
     {
       "model": "claude-sonnet-4-6",
-      "executions": 1,
-      "tokens_in": 1083366,
-      "tokens_out": 8740,
-      "cache_read": 974871,
-      "cache_write": 108481,
-      "tool_calls": 12,
-      "duration_s": 0,
-      "gate_pass": 1,
-      "gate_first": 1,
-      "gate_rated": 1,
-      "gate_first_pass": 1
+      "executions": 31,
+      "tokens_in": 106528926,
+      "tokens_out": 517686,
+      "cache_read": 104883784,
+      "cache_write": 1644208,
+      "tool_calls": 976,
+      "duration_s": 11792,
+      "gate_pass": 29,
+      "gate_first": 27,
+      "gate_rated": 31,
+      "gate_first_pass": 0.871
     },
     {
       "model": "unknown",
