@@ -11,6 +11,13 @@ const STATUS_COLORS: Record<string, string> = {
   labeled: "#a78bfa",
 };
 
+const STATUS_BG: Record<string, string> = {
+  pending: "var(--bg-elevated)",
+  keep: "color-mix(in srgb, var(--teal) 12%, var(--bg-elevated))",
+  discard: "color-mix(in srgb, #e05252 12%, var(--bg-elevated))",
+  labeled: "color-mix(in srgb, #a78bfa 12%, var(--bg-elevated))",
+};
+
 const PAGE_SIZE = 100;
 
 function StatsBar({ stats }: { stats: FrameStats }) {
@@ -102,7 +109,7 @@ function BulkBar({
           cursor: "pointer",
         }}
       >
-        Descartar
+        Discard
       </button>
       <button
         onClick={onClear}
@@ -141,7 +148,9 @@ function FrameCard({
     <div
       style={{
         position: "relative",
-        background: "var(--bg-elevated)",
+        background: selected
+          ? "color-mix(in srgb, var(--teal) 18%, var(--bg-elevated))"
+          : (STATUS_BG[frame.status] ?? "var(--bg-elevated)"),
         border: `2px solid ${selected ? "var(--teal)" : STATUS_COLORS[frame.status] ?? "var(--border)"}`,
         borderRadius: "var(--radius-sm)",
         overflow: "hidden",
@@ -361,7 +370,7 @@ function PaginationBar({
 export default function DatasetView() {
   const [frames, setFrames] = useState<Frame[]>([]);
   const [stats, setStats] = useState<FrameStats>({ total: 0 });
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("pending");
   const [offset, setOffset] = useState(0);
   const [total, setTotal] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
@@ -434,6 +443,14 @@ export default function DatasetView() {
     });
   }
 
+  function toggleSelectAll() {
+    if (frames.length > 0 && frames.every((f) => selectedIds.has(f.id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(frames.map((f) => f.id)));
+    }
+  }
+
   function handleFrameUpdated(updated: Frame) {
     setFrames((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
     adminApi.frameStats().then(setStats).catch(() => {});
@@ -498,7 +515,7 @@ export default function DatasetView() {
         <StatsBar stats={stats} />
 
         {/* Filters */}
-        <div style={{ display: "flex", gap: "0.35rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "0.35rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           {FILTERS.map((f) => (
             <button
               key={f.id}
@@ -517,6 +534,23 @@ export default function DatasetView() {
               {f.label}
             </button>
           ))}
+          {frames.length > 0 && (
+            <button
+              onClick={toggleSelectAll}
+              style={{
+                marginLeft: "auto",
+                padding: "0.26rem 0.75rem",
+                borderRadius: "999px",
+                fontSize: "0.82rem",
+                border: "1px solid var(--border)",
+                background: "transparent",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+              }}
+            >
+              {frames.every((f) => selectedIds.has(f.id)) ? "Desmarcar todos" : "Selecionar todos"}
+            </button>
+          )}
         </div>
 
         {/* Grid */}
@@ -529,7 +563,9 @@ export default function DatasetView() {
           </p>
         ) : (
           <>
-            <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
+            <div style={{ marginBottom: "0.5rem" }}>
+              <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
+            </div>
             <BulkBar
               count={selectedIds.size}
               onKeep={() => handleBulkMark("keep")}
