@@ -23,6 +23,18 @@ export interface FramesResponse {
   total: number;
 }
 
+export interface BBox {
+  class_id: number;
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+}
+
+export interface LabelsResponse {
+  labels: BBox[];
+}
+
 export interface TrainingRun {
   name: string;
   has_best_weights: boolean;
@@ -132,6 +144,9 @@ export const adminApi = {
     request<Frame>("PATCH", `/admin/frames/${id}`, { status }),
   splitDataset: (train_ratio = 0.8, seed = 42) =>
     request<{ message: string; ok: boolean }>("POST", `/admin/dataset/split?train_ratio=${train_ratio}&seed=${seed}`),
+  frameLabels: (id: number) => get<LabelsResponse>(`/admin/frames/${id}/labels`),
+  saveFrameLabels: (id: number, labels: BBox[]) =>
+    request<Frame>("POST", `/admin/frames/${id}/labels`, { labels }),
   clips: (limit = 50, offset = 0) => get<Clip[]>("/admin/clips", { limit, offset }),
   sync: () => request<{ status: string; pid: number }>("POST", "/admin/sync"),
   extract: () => request<{ status: string; pid: number }>("POST", "/admin/extract"),

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { adminApi, type Frame, type FrameStats } from "../../api";
+import LabelModal from "./LabelModal";
 
 type Filter = "all" | "pending" | "keep" | "discard" | "labeled";
 
@@ -44,9 +45,11 @@ function StatsBar({ stats }: { stats: FrameStats }) {
 function FrameCard({
   frame,
   onMark,
+  onLabel,
 }: {
   frame: Frame;
   onMark: (id: number, status: string) => void;
+  onLabel: () => void;
 }) {
   return (
     <div
@@ -63,7 +66,8 @@ function FrameCard({
         src={`/api/v1/admin/frames/${frame.id}/image`}
         alt={`clip ${frame.clip_id} frame ${frame.frame_index}`}
         loading="lazy"
-        style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }}
+        onClick={onLabel}
+        style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block", cursor: "pointer" }}
       />
       <div style={{ padding: "0.4rem 0.5rem" }}>
         <div
@@ -125,6 +129,7 @@ export default function DatasetView() {
   const [total, setTotal] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [labelIdx, setLabelIdx] = useState<number | null>(null);
 
   const load = useCallback(async (f: Filter, o: number) => {
     setLoading(true);
@@ -178,6 +183,11 @@ export default function DatasetView() {
     }
   }
 
+  function handleFrameUpdated(updated: Frame) {
+    setFrames((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+    adminApi.frameStats().then(setStats).catch(() => {});
+  }
+
   const FILTERS: { id: Filter; label: string }[] = [
     { id: "all", label: "Todos" },
     { id: "pending", label: "Pending" },
@@ -187,6 +197,15 @@ export default function DatasetView() {
   ];
 
   return (
+    <>
+    {labelIdx !== null && (
+      <LabelModal
+        frames={frames}
+        initialIndex={labelIdx}
+        onClose={() => setLabelIdx(null)}
+        onFrameUpdated={handleFrameUpdated}
+      />
+    )}
     <div>
       {/* Toolbar */}
       <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
@@ -278,8 +297,8 @@ export default function DatasetView() {
               marginBottom: "1rem",
             }}
           >
-            {frames.map((f) => (
-              <FrameCard key={f.id} frame={f} onMark={handleMark} />
+            {frames.map((f, i) => (
+              <FrameCard key={f.id} frame={f} onMark={handleMark} onLabel={() => setLabelIdx(i)} />
             ))}
           </div>
 
@@ -320,5 +339,6 @@ export default function DatasetView() {
         </>
       )}
     </div>
+    </>
   );
 }

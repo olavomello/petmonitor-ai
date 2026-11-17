@@ -7,11 +7,16 @@ from pathlib import Path
 import pytest
 
 from petmonitor.api.admin_routes import (
+    BBoxItem,
     FrameUpdate,
+    LabelsPayload,
+    _label_path,
     _scan_frames,
+    get_frame_labels,
     get_frame_stats,
     list_frames,
     list_runs,
+    save_frame_labels,
     scan_frames,
     update_frame,
 )
@@ -200,3 +205,89 @@ def test_list_runs_reads_results_csv(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     result = list_runs()
     assert result[0]["has_metrics"] is True
     assert result[0]["last_epoch"]["mAP50"] == "0.52"
+
+
+# ------------------------------------------------------------------
+# _label_path helper
+# ------------------------------------------------------------------
+
+def test_label_path_converts_images_to_labels() -> None:
+    p = _label_path("datasets/images/raw/42/frame_000001.jpg")
+    assert p == Path("datasets/labels/raw/42/frame_000001.txt")
+
+
+# ------------------------------------------------------------------
+# get_frame_labels / save_frame_labels
+# ------------------------------------------------------------------
+
+def _make_frame(db: Database, tmp_path: Path) -> dict:
+    img_dir = tmp_path / "datasets" / "images" / "raw" / "1"
+    img_dir.mkdir(parents=True)
+    img = img_dir / "frame_000001.jpg"
+    img.write_bytes(b"\xff\xd8\xff")
+    db.insert_frames_bulk([{
+        "clip_id": 1, "frame_index": 1, "file_path": img.as_posix(),
+    }])
+    return db.list_frames(limit=1)[0]
+
+
+def test_get_frame_labels_no_file(
+    monkeypatch: pytest.MonkeyPatch, db: Database, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    frame = _make_frame(db, tmp_path)
+    result = get_frame_labels(frame["id"], db=db)
+    assert result == {"labels": []}
+
+
+def test_get_frame_labels_reads_file(
+    monkeypatch: pytest.MonkeyPatch, db: Database, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    frame = _make_frame(db, tmp_path)
+    label_dir = tmp_path / "datasets" / "labels" / "raw" / "1"
+    label_dir.mkdir(parents=True)
+    (label_dir / "frame_000001.txt").write_text("0 0.5 0.5 0.3 0.4\n1 0.2 0.3 0.1 0.15")
+    result = get_frame_labels(frame["id"], db=db)
+    assert len(result["labels"]) == 2
+    assert result["labels"][0]["class_id"] == 0
+    assert result["labels"][1]["class_id"] == 1
+
+
+def test_get_frame_labels_not_found(db: Database) -> None:
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc:
+        get_frame_labels(9999, db=db)
+    assert exc.value.status_code == 404
+
+
+def test_save_frame_labels_writes_file_and_sets_labeled(
+    monkeypatch: pytest.MonkeyPatch, db: Database, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    frame = _make_frame(db, tmp_path)
+    payload = LabelsPayload(labels=[
+        BBoxItem(class_id=0, cx=0.5, cy=0.5, w=0.3, h=0.4),
+    ])
+    updated = save_frame_labels(frame["id"], body=payload, db=db)
+    assert updated["status"] == "labeled"
+    label_file = tmp_path / "datasets" / "labels" / "raw" / "1" / "frame_000001.txt"
+    assert label_file.exists()
+    assert "0 0.500000" in label_file.read_text()
+
+
+def test_save_frame_labels_empty_does_not_set_labeled(
+    monkeypatch: pytest.MonkeyPatch, db: Database, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    frame = _make_frame(db, tmp_path)
+    payload = LabelsPayload(labels=[])
+    updated = save_frame_labels(frame["id"], body=payload, db=db)
+    assert updated["status"] == "pending"
+
+
+def test_save_frame_labels_not_found(db: Database) -> None:
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc:
+        save_frame_labels(9999, body=LabelsPayload(labels=[]), db=db)
+    assert exc.value.status_code == 404

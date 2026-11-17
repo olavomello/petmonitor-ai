@@ -124,6 +124,78 @@ def get_frame_image(frame_id: int, db: Database = Depends(get_db)):
     return FileResponse(str(file_path), media_type="image/jpeg")
 
 
+def _label_path(file_path: str) -> Path:
+    """datasets/images/raw/X/Y.jpg → datasets/labels/raw/X/Y.txt"""
+    return Path(file_path.replace("/images/", "/labels/", 1)).with_suffix(".txt")
+
+
+def _resolve_label_path(file_path: str) -> Path:
+    p = _label_path(file_path)
+    if not p.is_absolute():
+        p = Path.cwd() / p
+    datasets_root = (Path.cwd() / "datasets").resolve()
+    try:
+        p.resolve().relative_to(datasets_root)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return p
+
+
+class BBoxItem(BaseModel):
+    class_id: int
+    cx: float
+    cy: float
+    w: float
+    h: float
+
+
+class LabelsPayload(BaseModel):
+    labels: list[BBoxItem]
+
+
+@router.get("/frames/{frame_id}/labels")
+def get_frame_labels(frame_id: int, db: Database = Depends(get_db)) -> dict:
+    frame = db.get_frame(frame_id)
+    if frame is None:
+        raise HTTPException(status_code=404, detail="Frame not found")
+    label_path = _resolve_label_path(frame["file_path"])
+    if not label_path.exists():
+        return {"labels": []}
+    items = []
+    for line in label_path.read_text(encoding="utf-8").splitlines():
+        parts = line.strip().split()
+        if len(parts) == 5:
+            items.append({
+                "class_id": int(parts[0]),
+                "cx": float(parts[1]),
+                "cy": float(parts[2]),
+                "w": float(parts[3]),
+                "h": float(parts[4]),
+            })
+    return {"labels": items}
+
+
+@router.post("/frames/{frame_id}/labels")
+def save_frame_labels(
+    frame_id: int, body: LabelsPayload, db: Database = Depends(get_db)
+) -> dict:
+    frame = db.get_frame(frame_id)
+    if frame is None:
+        raise HTTPException(status_code=404, detail="Frame not found")
+    label_path = _resolve_label_path(frame["file_path"])
+    label_path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        f"{b.class_id} {b.cx:.6f} {b.cy:.6f} {b.w:.6f} {b.h:.6f}"
+        for b in body.labels
+    ]
+    label_path.write_text("\n".join(lines), encoding="utf-8")
+    if body.labels:
+        db.update_frame_status(frame_id, "labeled")
+    updated = db.get_frame(frame_id)
+    assert updated is not None
+    return updated
+
+
 class FrameUpdate(BaseModel):
     status: str
 
