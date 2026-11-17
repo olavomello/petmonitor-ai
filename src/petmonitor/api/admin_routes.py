@@ -196,25 +196,6 @@ def save_frame_labels(
     return updated
 
 
-class FrameUpdate(BaseModel):
-    status: str
-
-
-@router.patch("/frames/{frame_id}")
-def update_frame(
-    frame_id: int, body: FrameUpdate, db: Database = Depends(get_db)
-) -> dict:
-    if body.status not in _VALID_STATUSES:
-        raise HTTPException(status_code=422, detail=f"status must be one of {_VALID_STATUSES}")
-    frame = db.get_frame(frame_id)
-    if frame is None:
-        raise HTTPException(status_code=404, detail="Frame not found")
-    db.update_frame_status(frame_id, body.status)
-    updated = db.get_frame(frame_id)
-    assert updated is not None
-    return updated
-
-
 class BulkStatusPayload(BaseModel):
     ids: list[int]
     status: str
@@ -234,6 +215,25 @@ def bulk_update_frame_status(body: BulkStatusPayload, db: Database = Depends(get
         if result is not None:
             updated.append(result)
     return {"updated": len(updated), "frames": updated}
+
+
+class FrameUpdate(BaseModel):
+    status: str
+
+
+@router.patch("/frames/{frame_id}")
+def update_frame(
+    frame_id: int, body: FrameUpdate, db: Database = Depends(get_db)
+) -> dict:
+    if body.status not in _VALID_STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of {_VALID_STATUSES}")
+    frame = db.get_frame(frame_id)
+    if frame is None:
+        raise HTTPException(status_code=404, detail="Frame not found")
+    db.update_frame_status(frame_id, body.status)
+    updated = db.get_frame(frame_id)
+    assert updated is not None
+    return updated
 
 
 # ------------------------------------------------------------------
