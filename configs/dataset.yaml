@@ -2,7 +2,7 @@
 # path is relative to this file; images/labels are git-ignored (see .gitignore)
 # See docs/guides/mlops.md for labeling instructions.
 
-path: ../datasets       # project root → datasets/
+path: datasets          # relative to CWD (project root) — Ultralytics resolves relative to CWD, not to this file
 train: images/train
 val:   images/val
 test:  images/test      # optional held-out set for final evaluation
