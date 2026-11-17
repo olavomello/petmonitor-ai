@@ -3,7 +3,7 @@ import { adminApi, type Clip } from "../../api";
 
 function formatDate(iso: string | null) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  return new Date(iso).toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" });
 }
 
 export default function ClipsView() {
@@ -29,9 +29,9 @@ export default function ClipsView() {
     setMsg(null);
     try {
       const r = await adminApi.sync();
-      setMsg(`Sync iniciado (PID ${r.pid}) — acompanhe o terminal.`);
+      setMsg(`Sync started (PID ${r.pid}) — check the terminal.`);
     } catch (e) {
-      setMsg(`Erro: ${e}`);
+      setMsg(`Error: ${e}`);
     }
   }
 
@@ -39,9 +39,9 @@ export default function ClipsView() {
     setMsg(null);
     try {
       const r = await adminApi.extract();
-      setMsg(`Extração iniciada (PID ${r.pid}) — acompanhe o terminal.`);
+      setMsg(`Extraction started (PID ${r.pid}) — check the terminal.`);
     } catch (e) {
-      setMsg(`Erro: ${e}`);
+      setMsg(`Error: ${e}`);
     }
   }
 
@@ -59,7 +59,7 @@ export default function ClipsView() {
             fontSize: "0.9rem",
           }}
         >
-          Sync agora
+          Sync now
         </button>
         <button
           onClick={triggerExtract}
@@ -73,7 +73,7 @@ export default function ClipsView() {
             fontSize: "0.9rem",
           }}
         >
-          Extrair frames
+          Extract frames
         </button>
         <button
           onClick={load}
@@ -86,7 +86,7 @@ export default function ClipsView() {
             fontSize: "0.9rem",
           }}
         >
-          Recarregar
+          Reload
         </button>
       </div>
       {msg && (
@@ -105,18 +105,18 @@ export default function ClipsView() {
         </p>
       )}
       {loading ? (
-        <p style={{ color: "var(--text-muted)" }}>Carregando…</p>
+        <p style={{ color: "var(--text-muted)" }}>Loading…</p>
       ) : (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
             <thead>
               <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left" }}>
                 <th style={{ padding: "0.5rem 0.75rem" }}>#</th>
-                <th style={{ padding: "0.5rem 0.75rem" }}>Arquivo</th>
-                <th style={{ padding: "0.5rem 0.75rem" }}>Fonte</th>
-                <th style={{ padding: "0.5rem 0.75rem", textAlign: "right" }}>Detecções</th>
-                <th style={{ padding: "0.5rem 0.75rem", textAlign: "right" }}>Capturas</th>
-                <th style={{ padding: "0.5rem 0.75rem" }}>Data</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}>File</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}>Source</th>
+                <th style={{ padding: "0.5rem 0.75rem", textAlign: "right" }}>Detections</th>
+                <th style={{ padding: "0.5rem 0.75rem", textAlign: "right" }}>Tracks</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}>Date</th>
               </tr>
             </thead>
             <tbody>
@@ -152,7 +152,7 @@ export default function ClipsView() {
                     colSpan={6}
                     style={{ padding: "1rem", color: "var(--text-muted)", textAlign: "center" }}
                   >
-                    Nenhum clip encontrado.
+                    No clips found.
                   </td>
                 </tr>
               )}

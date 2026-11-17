@@ -47,6 +47,7 @@ export interface StatusResponse {
   clips: { total: number };
   detections: { total: number };
   tracks: { total: number };
+  blink_connected?: boolean;
 }
 
 export interface Clip {

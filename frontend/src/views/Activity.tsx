@@ -9,10 +9,10 @@ const STATE_COLORS: Record<string, string> = {
 };
 
 const STATE_LABELS: Record<string, string> = {
-  moving: "Em movimento",
-  stationary: "Parado",
-  not_visible: "Não visível",
-  unknown: "Desconhecido",
+  moving: "Moving",
+  stationary: "Stationary",
+  not_visible: "Not visible",
+  unknown: "Unknown",
 };
 
 function Badge({ state }: { state: string }) {
@@ -49,7 +49,7 @@ function SummaryBar({ summary }: { summary: Record<string, Record<string, number
               ))}
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
                 <span style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--text-secondary)" }}>{total}</span>
-                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>total</span>
+                <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Total</span>
               </div>
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function Activity() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Atividade</h1>
+        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Activity</h1>
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
@@ -94,20 +94,20 @@ export default function Activity() {
             fontSize: "0.9rem",
           }}
         >
-          <option value="">Todos os pets</option>
+          <option value="">All pets</option>
           {pets.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
         </select>
       </div>
 
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-      {loading && <p style={{ color: "var(--text-muted)" }}>Carregando…</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>Loading…</p>}
 
       {!loading && data && (
         <>
           <section>
-            <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.75rem" }}>Resumo</h2>
+            <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.75rem" }}>Summary</h2>
             {Object.keys(data.summary).length === 0
-              ? <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Nenhum evento processado ainda.</p>
+              ? <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>No events processed yet.</p>
               : <SummaryBar summary={data.summary} />
             }
             <p style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>{data.note}</p>
@@ -115,16 +115,16 @@ export default function Activity() {
 
           <section>
             <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.5rem" }}>
-              Eventos <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>({data.events.length})</span>
+              Events <span style={{ fontWeight: 400, color: "var(--text-muted)" }}>({data.events.length})</span>
             </h2>
             {data.events.length === 0
-              ? <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>Sem eventos para exibir.</p>
+              ? <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>No events to display.</p>
               : (
                 <div style={{ background: "var(--bg-card)", borderRadius: "var(--radius)", border: "1px solid var(--border)", overflow: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 420 }}>
                     <thead>
                       <tr style={{ background: "var(--bg-surface)" }}>
-                        {["Clipe", "Track", "Pet", "Estado", "Frames"].map((h) => (
+                        {["Clip", "Track", "Pet", "State", "Frames"].map((h) => (
                           <th key={h} style={{ padding: "0.6rem 0.75rem", textAlign: "left", fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: 500 }}>{h}</th>
                         ))}
                       </tr>

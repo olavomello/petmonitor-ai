@@ -66,13 +66,13 @@ const Icons = {
 
 const NAV_ITEMS: { id: View | null; label: string; iconKey: keyof typeof Icons; available: boolean }[] = [
   { id: "dashboard", label: "Dashboard", iconKey: "dashboard", available: true },
-  { id: "activity", label: "Atividades", iconKey: "activity", available: true },
-  { id: null, label: "Eventos", iconKey: "events", available: false },
-  { id: null, label: "Trajetórias", iconKey: "trajectories", available: false },
+  { id: "activity", label: "Activities", iconKey: "activity", available: true },
+  { id: null, label: "Events", iconKey: "events", available: false },
+  { id: null, label: "Trajectories", iconKey: "trajectories", available: false },
   { id: "heatmap", label: "Heatmap", iconKey: "heatmap", available: true },
-  { id: null, label: "Câmera", iconKey: "camera", available: false },
-  { id: "admin", label: "Modelos AI", iconKey: "models", available: true },
-  { id: null, label: "Configurações", iconKey: "settings", available: false },
+  { id: null, label: "Camera", iconKey: "camera", available: false },
+  { id: "admin", label: "AI Models", iconKey: "models", available: true },
+  { id: null, label: "Settings", iconKey: "settings", available: false },
 ];
 
 export default function NavBar({ active, onNavigate }: Props) {
@@ -80,29 +80,17 @@ export default function NavBar({ active, onNavigate }: Props) {
     <nav className="sidebar-nav">
       {/* Logo */}
       <div style={{
-        padding: "1.1rem 1rem",
+        padding: "1rem 1rem",
         borderBottom: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
-        gap: "0.6rem",
         flexShrink: 0,
       }}>
-        <div style={{
-          width: 30, height: 30, borderRadius: 7,
-          background: "var(--teal)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
-        }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2a3 3 0 00-3 3v3l-1 1.5h8L11 8V5a3 3 0 00-3-3z" fill="#0f1b2d" />
-            <circle cx="8" cy="8" r="1" fill="#0f1b2d" />
-          </svg>
-        </div>
-        <div>
-          <span style={{ fontWeight: 700, fontSize: "0.9rem", letterSpacing: "-0.01em" }}>
-            PetMonitor <span style={{ color: "var(--teal)" }}>AI</span>
-          </span>
-        </div>
+        <img
+          src="/logo.png"
+          alt="PetMonitor AI"
+          style={{ height: 32, maxWidth: "100%", objectFit: "contain", objectPosition: "left" }}
+        />
       </div>
 
       {/* Nav items */}
@@ -155,7 +143,7 @@ export default function NavBar({ active, onNavigate }: Props) {
                   padding: "0.1rem 0.4rem",
                   borderRadius: 999,
                 }}>
-                  breve
+                  soon
                 </span>
               )}
             </button>
@@ -185,6 +173,7 @@ export default function NavBar({ active, onNavigate }: Props) {
           <div style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--text-secondary)" }}>
             Blink – Living Room
           </div>
+
           <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.1rem" }}>
             <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--border)", display: "inline-block" }} />
             <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>Offline</span>

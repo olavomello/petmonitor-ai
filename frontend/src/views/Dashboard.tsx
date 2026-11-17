@@ -16,11 +16,11 @@ function relativeTime(iso: string | null): string {
   if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 2) return "agora";
-  if (mins < 60) return `${mins} min atrás`;
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins} min ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h atrás`;
-  return new Date(iso).toLocaleDateString("pt-BR");
+  if (hours < 24) return `${hours}h ago`;
+  return new Date(iso).toLocaleDateString("en-US");
 }
 
 function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
@@ -60,7 +60,7 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
               display: "inline-block", flexShrink: 0,
             }} />
             <span style={{ fontSize: "0.74rem", color: "var(--text-secondary)" }}>
-              {pet.clip_count > 0 ? "Detectada" : "Sem dados"}
+              {pet.clip_count > 0 ? "Detected" : "No data"}
             </span>
           </div>
         </div>
@@ -72,7 +72,7 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
           {pet.track_count || "—"}
         </div>
         <div style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
-          tracks · {pet.clip_count} clipes
+          tracks · {pet.clip_count} clips
         </div>
       </div>
 
@@ -88,7 +88,7 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
       </div>
 
       {/* Activity breakdown */}
-      {["Repouso", "Movimento", "Em pé", "Brincando"].map((label) => (
+      {["Resting", "Moving", "Standing", "Playing"].map((label) => (
         <div key={label} style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
           padding: "0.26rem 0",
@@ -103,7 +103,7 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
   );
 }
 
-function CameraPanel({ clips }: { clips: Clip[] }) {
+function CameraPanel({ clips, blinkConnected }: { clips: Clip[]; blinkConnected: boolean }) {
   const latest = clips[0];
   const filename = latest?.original_filename.split("\\").pop()?.split("/").pop() ?? latest?.original_filename;
 
@@ -123,14 +123,14 @@ function CameraPanel({ clips }: { clips: Clip[] }) {
         borderBottom: "1px solid var(--border)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Câmera</span>
+          <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Camera</span>
           <span style={{
             fontSize: "0.62rem", padding: "0.12rem 0.45rem",
             borderRadius: 999,
-            background: "rgba(239,68,68,0.15)",
-            color: "#fca5a5",
+            background: blinkConnected ? "rgba(34,197,94,0.15)" : "rgba(239,68,68,0.15)",
+            color: blinkConnected ? "#86efac" : "#fca5a5",
             fontWeight: 600,
-          }}>Offline</span>
+          }}>{blinkConnected ? "Online" : "Offline"}</span>
         </div>
         <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>Living Room</span>
       </div>
@@ -148,7 +148,7 @@ function CameraPanel({ clips }: { clips: Clip[] }) {
           <path d="M16 10.5l6-3v9l-6-3" stroke="#94a3b8" strokeWidth="1.5" strokeLinejoin="round" />
         </svg>
         <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center" }}>
-          Câmera Blink não conectada
+          {blinkConnected ? "Blink camera connected" : "Blink camera not connected"}
         </span>
         {filename && (
           <div style={{
@@ -163,7 +163,7 @@ function CameraPanel({ clips }: { clips: Clip[] }) {
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}>
-            Último: {filename}
+            Latest: {filename}
           </div>
         )}
       </div>
@@ -179,7 +179,7 @@ function CameraPanel({ clips }: { clips: Clip[] }) {
           fontSize: "0.72rem",
           color: "var(--text-muted)",
         }}>
-          <span>{latest.detection_count} detecções · {latest.track_count} tracks</span>
+          <span>{latest.detection_count} detections · {latest.track_count} tracks</span>
           <span>{relativeTime(latest.capture_at ?? latest.ingested_at)}</span>
         </div>
       )}
@@ -205,7 +205,7 @@ function ActivityChart({ pets }: { pets: Pet[] }) {
       flexDirection: "column",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Atividades do dia</span>
+        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Daily Activity</span>
         <div style={{ display: "flex", gap: "0.65rem" }}>
           {branca && (
             <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
@@ -242,7 +242,7 @@ function ActivityChart({ pets }: { pets: Pet[] }) {
       </div>
 
       <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.6rem" }}>
-        Analytics disponíveis após processar clipes
+        Analytics available after processing clips
       </p>
     </div>
   );
@@ -259,7 +259,7 @@ function HeatmapPanel({ onNavigate }: { onNavigate: () => void }) {
       flexDirection: "column",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Mapa de circulação</span>
+        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Movement Map</span>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block" }} />
@@ -300,7 +300,7 @@ function HeatmapPanel({ onNavigate }: { onNavigate: () => void }) {
             <line key={`h${y}`} x1={0} y1={y} x2={48} y2={y} stroke="#94a3b8" strokeWidth="0.5" />
           ))}
         </svg>
-        <span style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>Abrir heatmap completo →</span>
+        <span style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>Open full heatmap →</span>
       </div>
     </div>
   );
@@ -315,10 +315,10 @@ function RecentEvents({ clips }: { clips: Clip[] }) {
         marginBottom: "1rem",
       }}>
         <span style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: "0.65rem" }}>
-          Eventos recentes
+          Recent Events
         </span>
         <p style={{ color: "var(--text-muted)", fontSize: "0.84rem" }}>
-          Nenhum clipe ingerido ainda.
+          No clips ingested yet.
         </p>
       </div>
     );
@@ -331,7 +331,7 @@ function RecentEvents({ clips }: { clips: Clip[] }) {
       marginBottom: "1rem",
     }}>
       <span style={{ fontWeight: 600, fontSize: "0.88rem", display: "block", marginBottom: "0.85rem" }}>
-        Eventos recentes
+        Recent Events
       </span>
       <div style={{
         display: "grid",
@@ -366,7 +366,7 @@ function RecentEvents({ clips }: { clips: Clip[] }) {
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
-                    {clip.detection_count} det · {clip.track_count} track
+                    {clip.detection_count} det · {clip.track_count} tracks
                   </span>
                   <span style={{ fontSize: "0.68rem", color: "var(--text-muted)" }}>
                     {relativeTime(clip.capture_at ?? clip.ingested_at)}
@@ -383,8 +383,8 @@ function RecentEvents({ clips }: { clips: Clip[] }) {
 
 function DaySummary({ status }: { status: StatusResponse }) {
   const stats = [
-    { label: "Clipes processados", value: status.clips.total },
-    { label: "Detecções", value: status.detections.total },
+    { label: "Processed Clips", value: status.clips.total },
+    { label: "Detections", value: status.detections.total },
     { label: "Tracks", value: status.tracks.total },
   ];
 
@@ -423,7 +423,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
       .finally(() => setLoading(false));
   }, []);
 
-  const today = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
   const maxTracks = Math.max(...pets.map((p) => p.track_count), 1);
 
   if (loading) {
@@ -432,7 +432,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
         display: "flex", alignItems: "center", justifyContent: "center",
         padding: "5rem", color: "var(--text-muted)", fontSize: "0.9rem",
       }}>
-        Carregando…
+        Loading…
       </div>
     );
   }
@@ -446,9 +446,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
         border: "1px solid var(--danger)",
         color: "var(--danger)",
       }}>
-        <strong>Erro ao conectar com a API:</strong> {error}
+        <strong>Failed to connect to API:</strong> {error}
         <p style={{ marginTop: "0.5rem", color: "var(--text-secondary)", fontSize: "0.88rem" }}>
-          Verifique se <code style={{ color: "var(--teal)" }}>petmonitor-api</code> está em execução em 127.0.0.1:8000.
+          Make sure <code style={{ color: "var(--teal)" }}>petmonitor-api</code> is running at 127.0.0.1:8000.
         </p>
       </div>
     );
@@ -478,20 +478,20 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
                 borderRadius: "var(--radius)", padding: "1.5rem",
                 color: "var(--text-muted)", textAlign: "center", fontSize: "0.85rem",
               }}>
-                Sem pets registrados
+                No pets registered
               </div>
               <div style={{
                 background: "var(--bg-card)", border: "1px solid var(--border)",
                 borderRadius: "var(--radius)", padding: "1.5rem",
                 color: "var(--text-muted)", textAlign: "center", fontSize: "0.85rem",
               }}>
-                Sem pets registrados
+                No pets registered
               </div>
             </>
           )
         }
         <div className="db-camera">
-          <CameraPanel clips={clips} />
+          <CameraPanel clips={clips} blinkConnected={status?.blink_connected ?? false} />
         </div>
       </div>
 

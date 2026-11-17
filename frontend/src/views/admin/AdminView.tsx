@@ -8,7 +8,7 @@ type Tab = "dataset" | "clips" | "training";
 const TABS: { id: Tab; label: string }[] = [
   { id: "dataset", label: "Dataset" },
   { id: "clips", label: "Clips & Sync" },
-  { id: "training", label: "Treinamento" },
+  { id: "training", label: "Training" },
 ];
 
 export default function AdminView() {

@@ -50,29 +50,16 @@ const BottomIcons = {
 
 const NAV_BOTTOM: { id: View | null; label: string; iconKey: keyof typeof BottomIcons; available: boolean }[] = [
   { id: "dashboard", label: "Dashboard", iconKey: "dashboard", available: true },
-  { id: "activity", label: "Atividades", iconKey: "activity", available: true },
-  { id: null, label: "Eventos", iconKey: "events", available: false },
-  { id: null, label: "Trajetórias", iconKey: "trajectories", available: false },
-  { id: "admin", label: "Modelos", iconKey: "models", available: true },
+  { id: "activity", label: "Activities", iconKey: "activity", available: true },
+  { id: null, label: "Events", iconKey: "events", available: false },
+  { id: null, label: "Trajectories", iconKey: "trajectories", available: false },
+  { id: "admin", label: "Models", iconKey: "models", available: true },
 ];
 
 function MobileTopBar() {
   return (
     <header className="mobile-topbar">
-      <div style={{
-        width: 26, height: 26, borderRadius: 6,
-        background: "var(--teal)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-      }}>
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <path d="M8 2a3 3 0 00-3 3v3l-1 1.5h8L11 8V5a3 3 0 00-3-3z" fill="#0f1b2d" />
-          <circle cx="8" cy="8" r="1" fill="#0f1b2d" />
-        </svg>
-      </div>
-      <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>
-        PetMonitor <span style={{ color: "var(--teal)" }}>AI</span>
-      </span>
+      <img src="/logo.png" alt="PetMonitor AI" style={{ height: 26, objectFit: "contain" }} />
     </header>
   );
 }

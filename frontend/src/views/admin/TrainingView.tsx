@@ -23,9 +23,9 @@ export default function TrainingView() {
     setMsg(null);
     try {
       const r = await adminApi.train();
-      setMsg(`Treinamento iniciado (PID ${r.pid}) — acompanhe o terminal.`);
+      setMsg(`Training started (PID ${r.pid}) — check the terminal.`);
     } catch (e) {
-      setMsg(`Erro: ${e}`);
+      setMsg(`Error: ${e}`);
     }
   }
 
@@ -43,7 +43,7 @@ export default function TrainingView() {
             fontSize: "0.9rem",
           }}
         >
-          Iniciar treinamento
+          Start training
         </button>
         <button
           onClick={load}
@@ -56,7 +56,7 @@ export default function TrainingView() {
             fontSize: "0.9rem",
           }}
         >
-          Recarregar
+          Reload
         </button>
       </div>
       {msg && (
@@ -75,10 +75,10 @@ export default function TrainingView() {
         </p>
       )}
       {loading ? (
-        <p style={{ color: "var(--text-muted)" }}>Carregando…</p>
+        <p style={{ color: "var(--text-muted)" }}>Loading…</p>
       ) : runs.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>
-          Nenhuma run encontrada em <code>runs/detect/</code>.
+          No runs found in <code>runs/detect/</code>.
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
@@ -87,7 +87,7 @@ export default function TrainingView() {
               <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left" }}>
                 <th style={{ padding: "0.5rem 0.75rem" }}>Run</th>
                 <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>Weights</th>
-                <th style={{ padding: "0.5rem 0.75rem" }}>Última época</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}>Last epoch</th>
               </tr>
             </thead>
             <tbody>

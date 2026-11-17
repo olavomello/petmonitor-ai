@@ -29,7 +29,7 @@ export default function HeatmapView() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Mapa de Calor</h1>
+        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Heatmap</h1>
         <select
           value={selected}
           onChange={(e) => setSelected(e.target.value)}
@@ -42,13 +42,13 @@ export default function HeatmapView() {
             fontSize: "0.9rem",
           }}
         >
-          {pets.length === 0 && <option value="">Nenhum pet configurado</option>}
+          {pets.length === 0 && <option value="">No pets configured</option>}
           {pets.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
         </select>
       </div>
 
       {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
-      {loading && <p style={{ color: "var(--text-muted)" }}>Carregando…</p>}
+      {loading && <p style={{ color: "var(--text-muted)" }}>Loading…</p>}
 
       {!loading && data && (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -58,11 +58,11 @@ export default function HeatmapView() {
               <div style={{ fontWeight: 700, color: "var(--teal)" }}>{data.identity}</div>
             </div>
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "0.75rem 1rem" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Amostras</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Samples</div>
               <div style={{ fontWeight: 700 }}>{data.point_count}</div>
             </div>
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius)", padding: "0.75rem 1rem" }}>
-              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Grade</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Grid</div>
               <div style={{ fontWeight: 700 }}>{data.grid_w}×{data.grid_h}</div>
             </div>
           </div>
@@ -71,7 +71,7 @@ export default function HeatmapView() {
 
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem" }}>
             <div style={{ height: 10, width: 120, background: "linear-gradient(to right, rgba(0,180,216,0.1), rgba(255,100,0,0.95))", borderRadius: 4 }} />
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Baixa → Alta frequência</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Low → High frequency</span>
           </div>
 
           <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontStyle: "italic" }}>{data.note}</p>
@@ -79,7 +79,7 @@ export default function HeatmapView() {
       )}
 
       {!loading && !data && !error && selected && (
-        <p style={{ color: "var(--text-muted)" }}>Selecione um pet para ver o mapa de calor.</p>
+        <p style={{ color: "var(--text-muted)" }}>Select a pet to view the heatmap.</p>
       )}
     </div>
   );

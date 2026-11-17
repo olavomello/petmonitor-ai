@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from importlib.metadata import version as _pkg_version
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -22,6 +23,7 @@ router = APIRouter()
 def get_status(db: Database = Depends(get_db)) -> dict:
     stats = db.get_stats()
     stats["version"] = _VERSION
+    stats["blink_connected"] = Path("data/.blink_creds.json").exists()
     return stats
 
 

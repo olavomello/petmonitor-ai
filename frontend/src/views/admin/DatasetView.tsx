@@ -79,7 +79,7 @@ function BulkBar({
       }}
     >
       <span style={{ flex: 1, fontSize: "0.88rem", fontWeight: 600, color: "var(--teal)" }}>
-        {count} selecionado{count !== 1 ? "s" : ""}
+        {count} selected
       </span>
       <button
         onClick={onKeep}
@@ -123,7 +123,7 @@ function BulkBar({
           cursor: "pointer",
         }}
       >
-        Limpar
+        Clear
       </button>
     </div>
   );
@@ -332,16 +332,16 @@ function PaginationBar({
   return (
     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
       <button onClick={() => onOffset(Math.max(0, offset - pageSize))} disabled={offset === 0} style={btn}>
-        ← Anterior
+        ← Previous
       </button>
       <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", minWidth: "7rem", textAlign: "center" }}>
-        {offset + 1}–{Math.min(offset + pageSize, total)} de {total}
+        {offset + 1}–{Math.min(offset + pageSize, total)} of {total}
       </span>
       <button onClick={() => onOffset(offset + pageSize)} disabled={offset + pageSize >= total} style={btn}>
-        Próxima →
+        Next →
       </button>
       <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", marginLeft: "0.5rem" }}>
-        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Ir p/</span>
+        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Go to</span>
         <input
           type="number"
           min={1}
@@ -403,7 +403,7 @@ export default function DatasetView() {
     setMsg(null);
     try {
       const r = await adminApi.scanFrames();
-      setMsg(`Scan: ${r.registered} novos, ${r.total} total.`);
+      setMsg(`Scan: ${r.registered} new, ${r.total} total.`);
       await load(filter, offset);
     } catch (e) { setMsg(String(e)); }
   }
@@ -412,7 +412,7 @@ export default function DatasetView() {
     setMsg(null);
     try {
       const r = await adminApi.splitDataset();
-      setMsg(r.message ?? "Split concluído.");
+      setMsg(r.message ?? "Split done.");
     } catch (e) { setMsg(String(e)); }
   }
 
@@ -457,7 +457,7 @@ export default function DatasetView() {
   }
 
   const FILTERS: { id: Filter; label: string; color?: string }[] = [
-    { id: "all", label: "Todos" },
+    { id: "all", label: "All" },
     { id: "pending", label: "Pending", color: STATUS_COLORS.pending },
     { id: "keep", label: "Keep", color: STATUS_COLORS.keep },
     { id: "discard", label: "Discard", color: STATUS_COLORS.discard },
@@ -548,18 +548,18 @@ export default function DatasetView() {
                 cursor: "pointer",
               }}
             >
-              {frames.every((f) => selectedIds.has(f.id)) ? "Desmarcar todos" : "Selecionar todos"}
+              {frames.every((f) => selectedIds.has(f.id)) ? "Deselect all" : "Select all"}
             </button>
           )}
         </div>
 
         {/* Grid */}
         {loading ? (
-          <p style={{ color: "var(--text-muted)" }}>Carregando…</p>
+          <p style={{ color: "var(--text-muted)" }}>Loading…</p>
         ) : frames.length === 0 ? (
           <p style={{ color: "var(--text-muted)" }}>
-            Nenhum frame encontrado.{" "}
-            {stats.total === 0 && 'Clique em "Scan frames" para registrar.'}
+            No frames found.{" "}
+            {stats.total === 0 && 'Click "Scan frames" to register.'}
           </p>
         ) : (
           <>

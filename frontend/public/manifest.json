@@ -1,14 +1,14 @@
 {
   "name": "PetMonitor AI",
   "short_name": "PetMonitor",
-  "description": "Monitor automático de comportamento de pets via visão computacional",
+  "description": "Automatic pet behaviour monitoring via computer vision",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f1b2d",
   "theme_color": "#0f1b2d",
   "orientation": "any",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/web-app-manifest-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/web-app-manifest-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
