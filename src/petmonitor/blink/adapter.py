@@ -253,8 +253,8 @@ class BlinkAdapter:
                 if not media:
                     break
                 for item in media:
-                    # Filter by camera name when specified; media API uses "device" field.
-                    item_cam = item.get("device_name", item.get("device", item.get("camera_name", "")))
+                    # Filter by camera name when specified; media API uses "device_name".
+                    item_cam = item.get("device_name", item.get("camera_name", item.get("device", "")))
                     if camera_name and item_cam != cam.name:
                         continue
                     raw_clips.append(item)
@@ -277,9 +277,11 @@ class BlinkAdapter:
 
         for entry in raw_clips:
             if isinstance(entry, dict):
-                # Media API returns "address" (relative path); cam.clips uses "url".
-                address = entry.get("address", entry.get("url", ""))
-                url = (base_url + address) if address.startswith("/") else address
+                if entry.get("deleted"):
+                    continue
+                # Media API: path in "media" field; legacy cam.clips uses "url"/"address".
+                path = entry.get("media", entry.get("address", entry.get("url", "")))
+                url = (base_url + path) if path.startswith("/") else path
                 ts_str = entry.get("created_at", "")
             else:
                 url = getattr(entry, "url", "")
@@ -322,14 +324,16 @@ class BlinkAdapter:
 
         logger.info("Downloading clip to %s…", dest)
         try:
-            # blinkpy 0.22+: use the session's authenticated request.
-            async with self._blink.auth.session.get(clip.clip_url) as resp:
-                if resp.status != 200:
-                    raise BlinkDownloadError(
-                        f"HTTP {resp.status} downloading clip from Blink"
-                    )
-                content = await resp.read()
-
+            # Use blinkpy's authenticated http_get (includes TOKEN_AUTH header).
+            # do_http_get expects the path relative to base_url.
+            base_url = getattr(getattr(self._blink, "urls", None), "base_url", "")
+            path = clip.clip_url[len(base_url):] if clip.clip_url.startswith(base_url) else clip.clip_url
+            resp = await self._blink.do_http_get(path)
+            if resp is None or getattr(resp, "status", 200) not in (200, None):
+                raise BlinkDownloadError(
+                    f"HTTP {getattr(resp, 'status', '?')} downloading clip from Blink"
+                )
+            content = await resp.read()
             dest.write_bytes(content)
             clip.local_path = dest
             clip.downloaded_at = datetime.now(timezone.utc)
