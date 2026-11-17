@@ -1,4 +1,4 @@
-"""SQLite storage layer — clips and detections tables."""
+"""SQLite storage layer — clips, detections, tracks, activity, trajectories and frames tables."""
 
 from __future__ import annotations
 
@@ -68,6 +68,18 @@ CREATE TABLE IF NOT EXISTS trajectories (
     frame_index INTEGER NOT NULL,
     x_px        REAL    NOT NULL,
     y_px        REAL    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS frames (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    clip_id     INTEGER NOT NULL,
+    frame_index INTEGER NOT NULL,
+    file_path   TEXT    NOT NULL UNIQUE,
+    status      TEXT    NOT NULL DEFAULT 'pending'
+                    CHECK(status IN ('pending','keep','discard','labeled')),
+    split       TEXT    DEFAULT NULL
+                    CHECK(split IS NULL OR split IN ('train','val','test')),
+    created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 """
 
@@ -425,3 +437,81 @@ class Database:
             """
         ).fetchall()
         return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------------
+    # Frames (extracted stills for dataset curation)
+    # ------------------------------------------------------------------
+
+    def insert_frames_bulk(self, frames: list[dict]) -> int:
+        """Insert a batch of frame records, skipping duplicates.  Returns inserted count."""
+        assert self._conn
+        before = self._conn.execute("SELECT COUNT(*) FROM frames").fetchone()[0]
+        self._conn.executemany(
+            "INSERT OR IGNORE INTO frames (clip_id, frame_index, file_path)"
+            " VALUES (:clip_id, :frame_index, :file_path)",
+            frames,
+        )
+        self._conn.commit()
+        after = self._conn.execute("SELECT COUNT(*) FROM frames").fetchone()[0]
+        return after - before
+
+    def get_frame_paths(self) -> set[str]:
+        assert self._conn
+        rows = self._conn.execute("SELECT file_path FROM frames").fetchall()
+        return {r["file_path"] for r in rows}
+
+    def list_frames(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+        status: str | None = None,
+        clip_id: int | None = None,
+    ) -> list[dict]:
+        assert self._conn
+        q = "SELECT * FROM frames WHERE 1=1"
+        params: list = []
+        if status is not None:
+            q += " AND status = ?"
+            params.append(status)
+        if clip_id is not None:
+            q += " AND clip_id = ?"
+            params.append(clip_id)
+        q += " ORDER BY clip_id, frame_index LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+        rows = self._conn.execute(q, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def count_frames(self, status: str | None = None, clip_id: int | None = None) -> int:
+        assert self._conn
+        q = "SELECT COUNT(*) FROM frames WHERE 1=1"
+        params: list = []
+        if status is not None:
+            q += " AND status = ?"
+            params.append(status)
+        if clip_id is not None:
+            q += " AND clip_id = ?"
+            params.append(clip_id)
+        return self._conn.execute(q, params).fetchone()[0]
+
+    def update_frame_status(self, frame_id: int, status: str) -> None:
+        assert self._conn
+        self._conn.execute(
+            "UPDATE frames SET status = ? WHERE id = ?", (status, frame_id)
+        )
+        self._conn.commit()
+
+    def get_frame(self, frame_id: int) -> dict | None:
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT * FROM frames WHERE id = ?", (frame_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def get_frame_stats(self) -> dict:
+        assert self._conn
+        rows = self._conn.execute(
+            "SELECT status, COUNT(*) AS count FROM frames GROUP BY status"
+        ).fetchall()
+        stats: dict = {r["status"]: r["count"] for r in rows}
+        stats["total"] = sum(stats.values())
+        return stats

@@ -1,5 +1,35 @@
 const BASE = "/api/v1";
 
+export interface Frame {
+  id: number;
+  clip_id: number;
+  frame_index: number;
+  file_path: string;
+  status: "pending" | "keep" | "discard" | "labeled";
+  split: "train" | "val" | "test" | null;
+  created_at: string;
+}
+
+export interface FrameStats {
+  total: number;
+  pending?: number;
+  keep?: number;
+  discard?: number;
+  labeled?: number;
+}
+
+export interface FramesResponse {
+  frames: Frame[];
+  total: number;
+}
+
+export interface TrainingRun {
+  name: string;
+  has_best_weights: boolean;
+  has_metrics: boolean;
+  last_epoch?: Record<string, string>;
+}
+
 export interface StatusResponse {
   version: string;
   clips: { total: number };
@@ -52,6 +82,20 @@ export interface HeatmapResponse {
   note: string;
 }
 
+async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  const url = BASE + path;
+  const res = await fetch(url, {
+    method,
+    headers: body !== undefined ? { "Content-Type": "application/json" } : {},
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText);
+    throw new Error(`${res.status} ${detail}`);
+  }
+  return res.json() as Promise<T>;
+}
+
 async function get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
   const url = new URL(BASE + path, window.location.origin);
   if (params) {
@@ -73,4 +117,24 @@ export const api = {
     get<ActivityResponse>("/activity", identity ? { identity } : undefined),
   heatmap: (identity: string, grid_w = 50, grid_h = 50) =>
     get<HeatmapResponse>(`/heatmap/${encodeURIComponent(identity)}`, { grid_w, grid_h }),
+};
+
+export const adminApi = {
+  frames: (limit = 100, offset = 0, status?: string) =>
+    get<FramesResponse>("/admin/frames", {
+      limit,
+      offset,
+      ...(status ? { status } : {}),
+    }),
+  frameStats: () => get<FrameStats>("/admin/frames/stats"),
+  scanFrames: () => request<{ registered: number; total: number }>("POST", "/admin/frames/scan"),
+  updateFrame: (id: number, status: string) =>
+    request<Frame>("PATCH", `/admin/frames/${id}`, { status }),
+  splitDataset: (train_ratio = 0.8, seed = 42) =>
+    request<{ message: string; ok: boolean }>("POST", `/admin/dataset/split?train_ratio=${train_ratio}&seed=${seed}`),
+  clips: (limit = 50, offset = 0) => get<Clip[]>("/admin/clips", { limit, offset }),
+  sync: () => request<{ status: string; pid: number }>("POST", "/admin/sync"),
+  extract: () => request<{ status: string; pid: number }>("POST", "/admin/extract"),
+  runs: () => get<TrainingRun[]>("/admin/runs"),
+  train: () => request<{ status: string; pid: number }>("POST", "/admin/train"),
 };

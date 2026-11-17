@@ -1,14 +1,15 @@
-type View = "dashboard" | "activity" | "heatmap";
+type View = "dashboard" | "activity" | "heatmap" | "admin";
 
 interface Props {
   active: View;
   onNavigate: (v: View) => void;
 }
 
-const LINKS: { id: View; label: string; icon: string }[] = [
-  { id: "dashboard", label: "Dashboard", icon: "⬛" },
-  { id: "activity", label: "Atividade", icon: "📋" },
-  { id: "heatmap", label: "Heatmap", icon: "🗺" },
+const LINKS: { id: View; label: string }[] = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "activity", label: "Atividade" },
+  { id: "heatmap", label: "Heatmap" },
+  { id: "admin", label: "Admin" },
 ];
 
 export default function NavBar({ active, onNavigate }: Props) {
