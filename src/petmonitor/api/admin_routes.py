@@ -283,27 +283,45 @@ def trigger_extract() -> dict:
 
 @router.get("/runs")
 def list_runs() -> list:
-    runs_dir = Path("runs/detect")
+    import json as _json
+
+    runs_dir = Path("runs")
     if not runs_dir.exists():
         return []
     runs = []
     for run_dir in sorted(runs_dir.iterdir(), reverse=True):
         if not run_dir.is_dir():
             continue
-        run: dict = {"name": run_dir.name, "has_best_weights": False, "has_metrics": False}
-        weights = run_dir / "weights" / "best.pt"
-        run["has_best_weights"] = weights.exists()
-        results_csv = run_dir / "results.csv"
-        if results_csv.exists():
-            run["has_metrics"] = True
-            try:
-                lines = results_csv.read_text(encoding="utf-8").strip().splitlines()
-                if len(lines) > 1:
-                    headers = [h.strip() for h in lines[0].split(",")]
-                    values = [v.strip() for v in lines[-1].split(",")]
-                    run["last_epoch"] = dict(zip(headers, values))
-            except Exception:
-                pass
+        meta_path = run_dir / "metadata.json"
+        if not meta_path.exists():
+            continue
+        run: dict = {
+            "name": run_dir.name,
+            "has_best_weights": False,
+            "has_metrics": False,
+            "started_at": None,
+            "finished_at": None,
+            "error": None,
+        }
+        weights_candidates = [
+            run_dir / "weights" / "best.pt",
+            run_dir / "yolo" / "weights" / "best.pt",
+        ]
+        run["has_best_weights"] = any(w.exists() for w in weights_candidates)
+        try:
+            meta = _json.loads(meta_path.read_text(encoding="utf-8"))
+            metrics = meta.get("metrics") or {}
+            run["has_metrics"] = bool(metrics)
+            if metrics:
+                run["last_epoch"] = {
+                    k: f"{v:.4f}" if isinstance(v, float) else str(v)
+                    for k, v in metrics.items()
+                }
+            run["started_at"] = meta.get("started_at")
+            run["finished_at"] = meta.get("finished_at")
+            run["error"] = meta.get("error")
+        except Exception:
+            pass
         runs.append(run)
     return runs
 

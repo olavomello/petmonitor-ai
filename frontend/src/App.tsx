@@ -31,7 +31,7 @@ function MoonIcon() {
 function MobileTopBar({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
     <header className="mobile-topbar">
-      <img src="/logo.png" alt="PetMonitor AI" style={{ height: 26, objectFit: "contain", flex: 1 }} />
+      <img src="/logo-white.png" alt="PetMonitor AI" style={{ height: 26, objectFit: "contain", flex: 1 }} />
       <button className="theme-toggle" onClick={onToggle} aria-label="Toggle theme">
         {theme === "dark" ? <SunIcon /> : <MoonIcon />}
       </button>

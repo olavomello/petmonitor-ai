@@ -92,7 +92,8 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
 
 function CameraPanel({ clips, blinkConnected }: { clips: Clip[]; blinkConnected: boolean }) {
   const latest = clips[0];
-  const filename = latest?.original_filename.split("\\").pop()?.split("/").pop() ?? latest?.original_filename;
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const thumbUrl = latest ? api.clipThumbnailUrl(latest.id) : null;
 
   return (
     <div style={{
@@ -122,35 +123,45 @@ function CameraPanel({ clips, blinkConnected }: { clips: Clip[]; blinkConnected:
         <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>Living Room</span>
       </div>
 
-      {/* Feed area */}
+      {/* Feed area — thumbnail of latest clip */}
       <div style={{
         flex: 1, background: "#080f1a",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        padding: "1.75rem 1.25rem", gap: "0.6rem",
+        position: "relative",
         minHeight: 160,
+        overflow: "hidden",
       }}>
-        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" opacity={0.25}>
-          <rect x="2" y="6" width="14" height="12" rx="2" stroke="#94a3b8" strokeWidth="1.5" />
-          <path d="M16 10.5l6-3v9l-6-3" stroke="#94a3b8" strokeWidth="1.5" strokeLinejoin="round" />
-        </svg>
-        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center" }}>
-          {blinkConnected ? "Blink camera connected" : "Blink camera not connected"}
-        </span>
-        {filename && (
+        {thumbUrl && !thumbFailed ? (
+          <img
+            src={thumbUrl}
+            alt="Latest clip"
+            onError={() => setThumbFailed(true)}
+            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 160 }}
+          />
+        ) : (
           <div style={{
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            padding: "0.35rem 0.65rem",
-            fontSize: "0.72rem",
-            color: "var(--text-muted)",
-            maxWidth: "100%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            padding: "1.75rem 1.25rem", gap: "0.6rem",
+            height: "100%", minHeight: 160,
           }}>
-            Latest: {filename}
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" opacity={0.25}>
+              <rect x="2" y="6" width="14" height="12" rx="2" stroke="#94a3b8" strokeWidth="1.5" />
+              <path d="M16 10.5l6-3v9l-6-3" stroke="#94a3b8" strokeWidth="1.5" strokeLinejoin="round" />
+            </svg>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center" }}>
+              {blinkConnected ? "Blink camera connected" : "Blink camera not connected"}
+            </span>
+          </div>
+        )}
+        {/* Overlay badge for detection count */}
+        {latest && latest.detection_count > 0 && (
+          <div style={{
+            position: "absolute", top: 8, right: 8,
+            background: "rgba(0,180,216,0.85)", color: "#fff",
+            fontSize: "0.62rem", fontWeight: 700,
+            padding: "0.1rem 0.4rem", borderRadius: 999,
+          }}>
+            {latest.detection_count} det.
           </div>
         )}
       </div>

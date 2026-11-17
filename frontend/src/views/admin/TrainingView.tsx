@@ -1,29 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { adminApi, type TrainingRun } from "../../api";
+
+function formatDt(s: string | null | undefined): string {
+  if (!s) return "—";
+  try {
+    return new Date(s).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch { return s; }
+}
 
 export default function TrainingView() {
   const [runs, setRuns] = useState<TrainingRun[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [polling, setPolling] = useState(false);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  async function load() {
-    setLoading(true);
+  async function load(silent = false) {
+    if (!silent) setLoading(true);
     try {
       setRuns(await adminApi.runs());
     } catch (e) {
       setMsg(String(e));
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }
 
   useEffect(() => { load(); }, []);
 
+  function startPolling() {
+    setPolling(true);
+    let ticks = 0;
+    pollRef.current = setInterval(async () => {
+      ticks++;
+      await load(true);
+      if (ticks >= 20) stopPolling();
+    }, 15_000);
+  }
+
+  function stopPolling() {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    setPolling(false);
+  }
+
+  useEffect(() => () => stopPolling(), []);
+
   async function triggerTrain() {
     setMsg(null);
     try {
       const r = await adminApi.train();
-      setMsg(`Training started (PID ${r.pid}) — check the terminal.`);
+      setMsg(`Training started (PID ${r.pid}) — refreshing every 15 s.`);
+      startPolling();
+      await load(true);
     } catch (e) {
       setMsg(`Error: ${e}`);
     }
@@ -31,7 +59,7 @@ export default function TrainingView() {
 
   return (
     <div>
-      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={triggerTrain}
           style={{
@@ -46,7 +74,7 @@ export default function TrainingView() {
           Start training
         </button>
         <button
-          onClick={load}
+          onClick={() => load()}
           style={{
             padding: "0.5rem 1.1rem",
             background: "transparent",
@@ -58,6 +86,12 @@ export default function TrainingView() {
         >
           Reload
         </button>
+        {polling && (
+          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+            Auto-refreshing…
+            <button onClick={stopPolling} style={{ marginLeft: "0.4rem", fontSize: "0.72rem", background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", textDecoration: "underline" }}>stop</button>
+          </span>
+        )}
       </div>
       {msg && (
         <p
@@ -78,7 +112,7 @@ export default function TrainingView() {
         <p style={{ color: "var(--text-muted)" }}>Loading…</p>
       ) : runs.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>
-          No runs found in <code>runs/detect/</code>.
+          No training runs found in <code>runs/</code>. Start one above.
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
@@ -86,14 +120,18 @@ export default function TrainingView() {
             <thead>
               <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left" }}>
                 <th style={{ padding: "0.5rem 0.75rem" }}>Run</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}>Started</th>
                 <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>Weights</th>
-                <th style={{ padding: "0.5rem 0.75rem" }}>Last epoch</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}>Metrics / Status</th>
               </tr>
             </thead>
             <tbody>
               {runs.map((r) => (
                 <tr key={r.name} style={{ borderBottom: "1px solid var(--border)" }}>
-                  <td style={{ padding: "0.5rem 0.75rem", fontFamily: "monospace" }}>{r.name}</td>
+                  <td style={{ padding: "0.5rem 0.75rem", fontFamily: "monospace", fontSize: "0.78rem" }}>{r.name}</td>
+                  <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                    {formatDt(r.started_at)}
+                  </td>
                   <td style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>
                     {r.has_best_weights ? (
                       <span style={{ color: "var(--teal)" }}>✓</span>
@@ -101,13 +139,18 @@ export default function TrainingView() {
                       <span style={{ color: "var(--text-muted)" }}>—</span>
                     )}
                   </td>
-                  <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                    {r.last_epoch
-                      ? Object.entries(r.last_epoch)
-                          .slice(0, 5)
-                          .map(([k, v]) => `${k}=${v}`)
-                          .join("  ")
-                      : "—"}
+                  <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.78rem" }}>
+                    {r.error ? (
+                      <span style={{ color: "#f87171" }} title={r.error}>Error</span>
+                    ) : r.last_epoch ? (
+                      <span style={{ color: "var(--text-secondary)" }}>
+                        {Object.entries(r.last_epoch).map(([k, v]) => `${k}=${v}`).join("  ")}
+                      </span>
+                    ) : r.finished_at ? (
+                      <span style={{ color: "var(--text-muted)" }}>Done — no metrics</span>
+                    ) : (
+                      <span style={{ color: "var(--teal)" }}>Running…</span>
+                    )}
                   </td>
                 </tr>
               ))}

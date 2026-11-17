@@ -40,6 +40,9 @@ export interface TrainingRun {
   has_best_weights: boolean;
   has_metrics: boolean;
   last_epoch?: Record<string, string>;
+  started_at?: string | null;
+  finished_at?: string | null;
+  error?: string | null;
 }
 
 export interface StatusResponse {

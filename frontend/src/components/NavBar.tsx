@@ -19,7 +19,7 @@ export default function NavBar({ active, onNavigate }: Props) {
         height: 46,
       }}>
         <img
-          src="/logo.png"
+          src="/logo-white.png"
           alt="PetMonitor AI"
           style={{ height: 28, maxWidth: "90%", objectFit: "contain" }}
         />
