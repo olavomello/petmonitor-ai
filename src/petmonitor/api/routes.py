@@ -5,8 +5,6 @@ from __future__ import annotations
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from starlette.responses import FileResponse
 
