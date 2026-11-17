@@ -14,6 +14,7 @@ import argparse
 import logging
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -65,12 +66,33 @@ def main() -> None:  # pragma: no cover
     metrics: dict = {}
     model_path: str | None = None
 
+    # Ultralytics resolves a relative `path:` inside dataset.yaml against its own
+    # configured datasets_dir (not CWD), so we write a temp yaml with the absolute
+    # path to avoid "images not found" errors regardless of system settings.
+    tmp_yaml: Path | None = None
+    try:
+        import yaml as _yaml
+
+        with open(cfg.dataset_path) as _fh:
+            _ds = _yaml.safe_load(_fh)
+        _ds["path"] = str((Path.cwd() / _ds.get("path", "datasets")).resolve())
+        _tmp = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False, dir=Path.cwd()
+        )
+        _yaml.dump(_ds, _tmp)
+        _tmp.close()
+        tmp_yaml = Path(_tmp.name)
+        data_path = str(tmp_yaml)
+    except Exception as _exc:
+        log.warning("Could not create resolved dataset yaml: %s — using original", _exc)
+        data_path = cfg.dataset_path
+
     try:
         from ultralytics import YOLO
 
         model = YOLO(cfg.model_base)
         results = model.train(
-            data=cfg.dataset_path,
+            data=data_path,
             epochs=cfg.epochs,
             imgsz=cfg.imgsz,
             batch=cfg.batch,
@@ -112,6 +134,9 @@ def main() -> None:  # pragma: no cover
     except Exception as exc:
         error = str(exc)
         log.error("Training failed: %s", exc)
+
+    if tmp_yaml is not None:
+        tmp_yaml.unlink(missing_ok=True)
 
     logger.finish(metrics=metrics, model_path=model_path, error=error)
     log.info("Run metadata saved to %s/metadata.json", logger.run_dir)
