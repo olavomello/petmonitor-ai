@@ -1,0 +1,26 @@
+# YOLO fine-tuning hyperparameters — PetMonitor AI
+# All runs are CPU-only (Intel i7-1065G7, Intel Iris Plus, no NVIDIA GPU).
+# Change only within these bounds; document deviations in docs/decisions.md.
+
+model:
+  base: yolov8n.pt      # smallest Ultralytics model — best CPU throughput
+  imgsz: 640
+
+training:
+  epochs: 100
+  batch: 4              # low for CPU RAM; increase if RAM allows
+  patience: 20          # early-stop after N epochs without mAP50 improvement
+  seed: 42              # reproducibility
+  workers: 0            # Windows DataLoader must use 0 workers
+  lr0: 0.01             # initial learning rate
+  weight_decay: 0.0005
+  warmup_epochs: 3
+  # mosaic: 1.0         # keep default; set 0.0 for small datasets (<50 images)
+
+dataset:
+  path: configs/dataset.yaml
+
+output:
+  runs_dir: runs
+  models_dir: models
+  # best weights saved to models/best.pt after each successful training run

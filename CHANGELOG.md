@@ -18,3 +18,7 @@ The format follows Keep a Changelog, and this project adheres to Semantic Versio
 - MVP 3: `ActivityAnalyser` module — `classify_track_state` (moving/stationary from bbox displacement), `extract_trajectory` (bottom-centre ground points), `compute_heatmap` (2-D density grid), `get_activity_summary`.
 - MVP 3: `petmonitor-analyse` CLI — classifies all unprocessed tracks and stores activity events and trajectory points.
 - MVP 3: API routes `GET /api/v1/activity` (events + summary, filterable by identity/clip) and `GET /api/v1/heatmap/{identity}` (density grid, configurable size).
+- MLOps: `configs/dataset.yaml` (Ultralytics 2-class format: Branca=0, Marrie=1) and `configs/train.yaml` (reproducible hyperparameters, CPU-only constraints).
+- MLOps: `src/petmonitor/mlops/` — `TrainConfig` (loader + validator) and `RunLogger` (structured JSON metadata for every run).
+- MLOps: `scripts/train.py`, `scripts/evaluate.py`, `scripts/extract_frames.py` — standalone ML pipeline scripts (pragma: no cover; require labeled dataset).
+- MLOps: evaluation reports abstention rate (Unknown tracks / total) alongside mAP50/precision/recall.

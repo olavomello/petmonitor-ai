@@ -1,18 +1,19 @@
-# PetMonitor AI — YOLO dataset configuration
-# Used by scripts/train.py and mlo-model-trainer agent.
-# See concept.md §9 for dataset layout.
+# Ultralytics YOLO dataset configuration — PetMonitor AI custom pet classes
+# path is relative to this file; images/labels are git-ignored (see .gitignore)
+# See docs/guides/mlops.md for labeling instructions.
 
-path: ../datasets  # relative to this file's location (configs/); adjust for your YOLO version
+path: ../datasets       # project root → datasets/
 train: images/train
-val: images/val
-test: images/test
+val:   images/val
+test:  images/test      # optional held-out set for final evaluation
 
-nc: 2  # number of classes
+nc: 2
 names:
   0: Branca
   1: Marrie
 
-# Notes:
-# - Resolve 'path' relative to the YOLO library's documented behavior before training.
-# - Validate by running `yolo data check data=configs/dataset.yaml` before the first training run.
-# - Labels use YOLO format: class_id cx cy w h (normalized 0–1).
+# --- labeling notes ---
+# bbox format: YOLO (cx cy w h), all values normalized 0–1
+# tool: LabelImg (YOLO format), Roboflow, or CVAT
+# minimum recommended images: 200 per class, 80/20 train/val split
+# augmentation: handled by Ultralytics during training (hsv, flipud, fliplr, mosaic)
