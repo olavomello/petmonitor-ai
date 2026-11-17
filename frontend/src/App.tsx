@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NavBar from "./components/NavBar";
 import Dashboard from "./views/Dashboard";
 import Activity from "./views/Activity";
@@ -6,6 +6,24 @@ import HeatmapView from "./views/HeatmapView";
 import AdminView from "./views/admin/AdminView";
 
 type View = "dashboard" | "activity" | "heatmap" | "admin";
+type Theme = "dark" | "light";
+
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M13.5 10A6 6 0 016 2.5a6 6 0 100 11 6 6 0 007.5-3.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+    </svg>
+  );
+}
 
 const BottomIcons = {
   dashboard: (
@@ -56,10 +74,13 @@ const NAV_BOTTOM: { id: View | null; label: string; iconKey: keyof typeof Bottom
   { id: "admin", label: "Models", iconKey: "models", available: true },
 ];
 
-function MobileTopBar() {
+function MobileTopBar({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
     <header className="mobile-topbar">
-      <img src="/logo.png" alt="PetMonitor AI" style={{ height: 26, objectFit: "contain" }} />
+      <img src="/logo.png" alt="PetMonitor AI" style={{ height: 26, objectFit: "contain", flex: 1 }} />
+      <button className="theme-toggle" onClick={onToggle} aria-label="Toggle theme">
+        {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+      </button>
     </header>
   );
 }
@@ -113,12 +134,27 @@ function BottomNav({ active, onNavigate }: { active: View; onNavigate: (v: View)
 
 export default function App() {
   const [view, setView] = useState<View>("dashboard");
+  const [theme, setTheme] = useState<Theme>(() => {
+    try { return (localStorage.getItem("theme") as Theme) || "dark"; } catch { return "dark"; }
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try { localStorage.setItem("theme", theme); } catch {}
+  }, [theme]);
+
+  function toggleTheme() { setTheme(t => t === "dark" ? "light" : "dark"); }
 
   return (
     <div className="app-shell">
       <NavBar active={view} onNavigate={setView} />
       <div className="main-wrap">
-        <MobileTopBar />
+        <MobileTopBar theme={theme} onToggle={toggleTheme} />
+        <div className="desktop-topbar">
+          <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </div>
         <main className="page-content">
           {view === "dashboard" && <Dashboard onNavigate={setView} />}
           {view === "activity" && <Activity />}

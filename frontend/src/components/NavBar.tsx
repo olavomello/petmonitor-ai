@@ -80,16 +80,19 @@ export default function NavBar({ active, onNavigate }: Props) {
     <nav className="sidebar-nav">
       {/* Logo */}
       <div style={{
-        padding: "1rem 1rem",
+        padding: "1rem",
         borderBottom: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         flexShrink: 0,
+        background: "rgba(255,255,255,0.07)",
+        height: 46,
       }}>
         <img
           src="/logo.png"
           alt="PetMonitor AI"
-          style={{ height: 32, maxWidth: "100%", objectFit: "contain", objectPosition: "left" }}
+          style={{ height: 28, maxWidth: "90%", objectFit: "contain" }}
         />
       </div>
 
