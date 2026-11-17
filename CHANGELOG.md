@@ -14,3 +14,7 @@ The format follows Keep a Changelog, and this project adheres to Semantic Versio
 - MVP 2: IoU-based `Tracker` with majority-vote pet identity resolution (Branca, Marrie, Unknown); `Tracker.from_config` reads pets from `app.yaml`.
 - MVP 2: `petmonitor-track` CLI — assigns track IDs and pet identity to all untracked clips.
 - MVP 2: Local REST API (`petmonitor-api`) — `GET /api/v1/status`, `/clips`, `/clips/{id}`, `/pets`; binds to 127.0.0.1 only.
+- MVP 3: `activity_events` and `trajectories` tables; `insert_activity_event`, `list_activity_events`, `list_clips_without_activity_events`, `insert_trajectory_points`, `list_trajectory_points`, `list_detections_for_track` DB helpers.
+- MVP 3: `ActivityAnalyser` module — `classify_track_state` (moving/stationary from bbox displacement), `extract_trajectory` (bottom-centre ground points), `compute_heatmap` (2-D density grid), `get_activity_summary`.
+- MVP 3: `petmonitor-analyse` CLI — classifies all unprocessed tracks and stores activity events and trajectory points.
+- MVP 3: API routes `GET /api/v1/activity` (events + summary, filterable by identity/clip) and `GET /api/v1/heatmap/{identity}` (density grid, configurable size).

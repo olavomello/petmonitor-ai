@@ -6,6 +6,7 @@ from importlib.metadata import version as _pkg_version
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from petmonitor.activities.analyser import compute_heatmap, get_activity_summary
 from petmonitor.api.deps import get_db
 from petmonitor.storage.database import Database
 
@@ -59,3 +60,39 @@ def get_pets(request: Request, db: Database = Depends(get_db)) -> list:
             }
         )
     return result
+
+
+@router.get("/activity")
+def get_activity(
+    identity: str | None = None,
+    clip_id: int | None = None,
+    db: Database = Depends(get_db),
+) -> dict:
+    events = db.list_activity_events(identity=identity, clip_id=clip_id)
+    summary = get_activity_summary(events)
+    return {
+        "events": events,
+        "summary": summary,
+        "note": "Counts reflect individual track events from processed footage.",
+    }
+
+
+@router.get("/heatmap/{identity}")
+def get_heatmap(
+    identity: str,
+    grid_w: int = 50,
+    grid_h: int = 50,
+    db: Database = Depends(get_db),
+) -> dict:
+    if not identity or identity.strip() == "":
+        raise HTTPException(status_code=400, detail="identity must not be empty")
+    points = db.list_trajectory_points(identity=identity)
+    grid = compute_heatmap(points, grid_w=grid_w, grid_h=grid_h)
+    return {
+        "identity": identity,
+        "grid_w": grid_w,
+        "grid_h": grid_h,
+        "point_count": len(points),
+        "grid": grid,
+        "note": "Grid values are sample counts from processed footage, not minutes.",
+    }

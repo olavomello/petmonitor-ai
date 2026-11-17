@@ -48,6 +48,27 @@ CREATE TABLE IF NOT EXISTS tracks (
     pet_id       INTEGER,
     UNIQUE(clip_id, track_id)
 );
+
+CREATE TABLE IF NOT EXISTS activity_events (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    clip_id     INTEGER NOT NULL REFERENCES clips(id),
+    track_id    INTEGER NOT NULL,
+    pet_id      INTEGER,
+    identity    TEXT    NOT NULL,
+    state       TEXT    NOT NULL CHECK(state IN ('moving','stationary','not_visible','unknown')),
+    frame_start INTEGER NOT NULL,
+    frame_end   INTEGER NOT NULL,
+    UNIQUE(clip_id, track_id)
+);
+
+CREATE TABLE IF NOT EXISTS trajectories (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    clip_id     INTEGER NOT NULL REFERENCES clips(id),
+    track_id    INTEGER NOT NULL,
+    frame_index INTEGER NOT NULL,
+    x_px        REAL    NOT NULL,
+    y_px        REAL    NOT NULL
+);
 """
 
 
@@ -281,6 +302,116 @@ class Database:
             "detections": {"total": detections},
             "tracks": {"total": tracks},
         }
+
+    def list_detections_for_track(
+        self, clip_id: int, frame_start: int, frame_end: int
+    ) -> list[dict]:
+        assert self._conn
+        rows = self._conn.execute(
+            """
+            SELECT * FROM detections
+            WHERE clip_id = ? AND frame_index BETWEEN ? AND ?
+            ORDER BY frame_index
+            """,
+            (clip_id, frame_start, frame_end),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------------
+    # Activity events
+    # ------------------------------------------------------------------
+
+    def insert_activity_event(
+        self,
+        clip_id: int,
+        track_id: int,
+        identity: str,
+        state: str,
+        frame_start: int,
+        frame_end: int,
+        pet_id: int | None = None,
+    ) -> int:
+        assert self._conn
+        cur = self._conn.execute(
+            """
+            INSERT OR IGNORE INTO activity_events
+                (clip_id, track_id, identity, state, frame_start, frame_end, pet_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (clip_id, track_id, identity, state, frame_start, frame_end, pet_id),
+        )
+        self._conn.commit()
+        return cur.lastrowid  # type: ignore[return-value]
+
+    def list_activity_events(
+        self,
+        identity: str | None = None,
+        clip_id: int | None = None,
+    ) -> list[dict]:
+        assert self._conn
+        query = "SELECT * FROM activity_events WHERE 1=1"
+        params: list = []
+        if identity is not None:
+            query += " AND identity = ?"
+            params.append(identity)
+        if clip_id is not None:
+            query += " AND clip_id = ?"
+            params.append(clip_id)
+        query += " ORDER BY clip_id, frame_start"
+        rows = self._conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+    def list_clips_without_activity_events(self) -> list[dict]:
+        assert self._conn
+        rows = self._conn.execute(
+            """
+            SELECT t.clip_id, t.track_id, t.identity, t.confidence,
+                   t.frame_start, t.frame_end, t.pet_id
+            FROM tracks t
+            WHERE NOT EXISTS (
+                SELECT 1 FROM activity_events a
+                WHERE a.clip_id = t.clip_id AND a.track_id = t.track_id
+            )
+            ORDER BY t.clip_id, t.track_id
+            """
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ------------------------------------------------------------------
+    # Trajectories
+    # ------------------------------------------------------------------
+
+    def insert_trajectory_points(
+        self, clip_id: int, track_id: int, points: list[dict]
+    ) -> None:
+        assert self._conn
+        self._conn.executemany(
+            """
+            INSERT INTO trajectories (clip_id, track_id, frame_index, x_px, y_px)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            [
+                (clip_id, track_id, p["frame_index"], p["x_px"], p["y_px"])
+                for p in points
+            ],
+        )
+        self._conn.commit()
+
+    def list_trajectory_points(
+        self, identity: str, db_tracks: list[dict] | None = None
+    ) -> list[dict]:
+        assert self._conn
+        rows = self._conn.execute(
+            """
+            SELECT tr.frame_index, tr.x_px, tr.y_px
+            FROM trajectories tr
+            JOIN tracks t ON t.clip_id = tr.clip_id AND t.track_id = tr.track_id
+            WHERE t.identity = ?
+            ORDER BY tr.clip_id, tr.frame_index
+            """,
+            (identity,),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
     def get_identity_stats(self) -> list[dict]:
         assert self._conn
