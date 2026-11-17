@@ -19,6 +19,7 @@ export default function LabelModal({ frames, initialIndex, onClose, onFrameUpdat
   const [draft, setDraft] = useState<BBox | null>(null);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [keepOnSave, setKeepOnSave] = useState(true);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -120,12 +121,26 @@ export default function LabelModal({ frames, initialIndex, onClose, onFrameUpdat
     setDrawStart(null);
   }
 
+  async function handleMarkStatus(status: string) {
+    try {
+      const updated = await adminApi.updateFrame(frame.id, status);
+      onFrameUpdated(updated);
+    } catch (err) {
+      setMsg(String(err));
+    }
+  }
+
   async function doSave(): Promise<boolean> {
     setSaving(true);
     setMsg(null);
     try {
-      const updated = await adminApi.saveFrameLabels(frame.id, labels);
-      onFrameUpdated(updated);
+      const saved = await adminApi.saveFrameLabels(frame.id, labels);
+      if (keepOnSave) {
+        const kept = await adminApi.updateFrame(frame.id, "keep");
+        onFrameUpdated(kept);
+      } else {
+        onFrameUpdated(saved);
+      }
       setMsg(`${labels.length} label(s) salvo(s).`);
       return true;
     } catch (err) {
@@ -253,25 +268,67 @@ export default function LabelModal({ frames, initialIndex, onClose, onFrameUpdat
       )}
 
       {/* Footer */}
-      <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={() => setIndex((i) => Math.max(i - 1, 0))} disabled={index === 0} style={btnBase}>
-          ← Anterior
-        </button>
-        <button
-          onClick={doSave}
-          disabled={saving}
-          style={{ ...btnBase, background: "var(--bg-elevated)", color: "var(--text-primary)", fontWeight: 600 }}
-        >
-          Salvar
-        </button>
-        <button
-          onClick={handleSaveAndNext}
-          disabled={saving || index >= frames.length - 1}
-          style={{ ...btnBase, background: "var(--teal)", border: "none", color: "#fff", fontWeight: 600 }}
-        >
-          Salvar e próximo →
-        </button>
-        <button onClick={onClose} style={btnBase}>Fechar</button>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+          {/* Quick status */}
+          <button
+            onClick={() => handleMarkStatus("keep")}
+            style={{
+              ...btnBase,
+              background: frame.status === "keep" ? "var(--teal)" : "transparent",
+              border: "1px solid var(--teal)",
+              color: frame.status === "keep" ? "#fff" : "var(--teal)",
+              fontWeight: 600,
+            }}
+          >
+            ✓ Keep
+          </button>
+          <button
+            onClick={() => handleMarkStatus("discard")}
+            style={{
+              ...btnBase,
+              background: frame.status === "discard" ? "#e05252" : "transparent",
+              border: "1px solid #e05252",
+              color: frame.status === "discard" ? "#fff" : "#e05252",
+              fontWeight: 600,
+            }}
+          >
+            ✗ Discard
+          </button>
+          <span style={{ color: "var(--border)" }}>|</span>
+          {/* Navigation */}
+          <button onClick={() => setIndex((i) => Math.max(i - 1, 0))} disabled={index === 0} style={btnBase}>
+            ← Anterior
+          </button>
+          {/* Save */}
+          <button
+            onClick={doSave}
+            disabled={saving}
+            style={{ ...btnBase, background: "var(--bg-elevated)", color: "var(--text-primary)", fontWeight: 600 }}
+          >
+            Salvar
+          </button>
+          {/* keepOnSave toggle */}
+          <label style={{ display: "flex", alignItems: "center", gap: "0.35rem", cursor: "pointer", userSelect: "none" }}>
+            <input
+              type="checkbox"
+              checked={keepOnSave}
+              onChange={(e) => setKeepOnSave(e.target.checked)}
+              style={{ accentColor: "var(--teal)", width: "14px", height: "14px", cursor: "pointer" }}
+            />
+            <span style={{ fontSize: "0.78rem", color: keepOnSave ? "var(--teal)" : "var(--text-muted)" }}>
+              Keep
+            </span>
+          </label>
+          <button
+            onClick={handleSaveAndNext}
+            disabled={saving || index >= frames.length - 1}
+            style={{ ...btnBase, background: "var(--teal)", border: "none", color: "#fff", fontWeight: 600 }}
+          >
+            {keepOnSave ? "Salvar, Keep e próximo →" : "Salvar e próximo →"}
+          </button>
+          <button onClick={onClose} style={btnBase}>Fechar</button>
+        </div>
         {msg && <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{msg}</span>}
       </div>
     </div>

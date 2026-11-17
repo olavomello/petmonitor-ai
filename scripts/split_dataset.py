@@ -62,7 +62,7 @@ def split(train_ratio: float = 0.8, seed: int = 42) -> dict:
 
     result = {"total": len(pairs), "train": n_train, "val": len(pairs) - n_train}
     logger.info(
-        "Split %d labeled frames → train=%d val=%d",
+        "Split %d labeled frames -> train=%d val=%d",
         result["total"], result["train"], result["val"],
     )
     return result
@@ -82,7 +82,7 @@ def main() -> None:
     )
     result = split(train_ratio=args.train, seed=args.seed)
     print(
-        f"Done: {result['total']} labeled frames → "
+        f"Done: {result['total']} labeled frames -> "
         f"train={result['train']} val={result['val']}"
     )
 
