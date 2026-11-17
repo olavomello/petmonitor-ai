@@ -4,8 +4,8 @@ import Dashboard from "./views/Dashboard";
 import Activity from "./views/Activity";
 import HeatmapView from "./views/HeatmapView";
 import AdminView from "./views/admin/AdminView";
+import { NavIcons, NAV_BOTTOM, type View } from "./nav";
 
-type View = "dashboard" | "activity" | "heatmap" | "admin";
 type Theme = "dark" | "light";
 
 function SunIcon() {
@@ -24,55 +24,6 @@ function MoonIcon() {
     </svg>
   );
 }
-
-const BottomIcons = {
-  dashboard: (
-    <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-      <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
-      <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  ),
-  activity: (
-    <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-      <rect x="1.5" y="8" width="3" height="6.5" rx="0.75" fill="currentColor" opacity="0.7" />
-      <rect x="6.5" y="4" width="3" height="10.5" rx="0.75" fill="currentColor" opacity="0.85" />
-      <rect x="11.5" y="1.5" width="3" height="13" rx="0.75" fill="currentColor" />
-    </svg>
-  ),
-  events: (
-    <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-      <path d="M8 1.5a4 4 0 00-4 4v4l-1.5 2h11L12 9.5v-4a4 4 0 00-4-4z" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.4" />
-    </svg>
-  ),
-  trajectories: (
-    <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-      <circle cx="3.5" cy="12.5" r="1.75" stroke="currentColor" strokeWidth="1.3" />
-      <circle cx="12.5" cy="3.5" r="1.75" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M5 11L11 5" stroke="currentColor" strokeWidth="1.3" strokeDasharray="2.5 2" />
-    </svg>
-  ),
-  models: (
-    <svg width="20" height="20" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="3" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="13" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="3" cy="13" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="13" cy="13" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M4.1 4.1L6.5 6.5M9.5 6.5L11.9 4.1M4.1 11.9L6.5 9.5M9.5 9.5L11.9 11.9" stroke="currentColor" strokeWidth="1.1" />
-    </svg>
-  ),
-};
-
-const NAV_BOTTOM: { id: View | null; label: string; iconKey: keyof typeof BottomIcons; available: boolean }[] = [
-  { id: "dashboard", label: "Dashboard", iconKey: "dashboard", available: true },
-  { id: "activity", label: "Activities", iconKey: "activity", available: true },
-  { id: null, label: "Events", iconKey: "events", available: false },
-  { id: null, label: "Trajectories", iconKey: "trajectories", available: false },
-  { id: "admin", label: "Models", iconKey: "models", available: true },
-];
 
 function MobileTopBar({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
@@ -122,7 +73,7 @@ function BottomNav({ active, onNavigate }: { active: View; onNavigate: (v: View)
               justifyContent: "center",
               transition: "background 0.12s",
             }}>
-              {BottomIcons[item.iconKey]}
+              {NavIcons[item.iconKey](20)}
             </div>
             {item.label}
           </button>

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, type Clip, type Pet, type StatusResponse } from "../api";
-
-type View = "dashboard" | "activity" | "heatmap" | "admin";
+import type { View } from "../nav";
 
 const PET_COLOR: Record<string, string> = {
   Branca: "var(--teal)",
@@ -87,18 +86,6 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
         }} />
       </div>
 
-      {/* Activity breakdown */}
-      {["Resting", "Moving", "Standing", "Playing"].map((label) => (
-        <div key={label} style={{
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          padding: "0.26rem 0",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-          fontSize: "0.78rem",
-        }}>
-          <span style={{ color: "var(--text-secondary)" }}>{label}</span>
-          <span style={{ color: "var(--text-muted)", fontFamily: "monospace", fontSize: "0.74rem" }}>—</span>
-        </div>
-      ))}
     </div>
   );
 }

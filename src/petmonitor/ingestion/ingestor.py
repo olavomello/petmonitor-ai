@@ -16,7 +16,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import shutil
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -43,23 +43,6 @@ class ClipRecord:
     ingested_at: datetime            # When we stored it (always set)
     duration_seconds: Optional[float] = None
     already_existed: bool = False    # True if dedup matched an existing record
-
-
-@dataclass
-class IngestionResult:
-    """Summary of a single ingestion run."""
-
-    new_clips: list[ClipRecord] = field(default_factory=list)
-    duplicate_clips: list[ClipRecord] = field(default_factory=list)
-    errors: list[str] = field(default_factory=list)
-
-    @property
-    def total(self) -> int:
-        return len(self.new_clips) + len(self.duplicate_clips)
-
-    @property
-    def success(self) -> bool:
-        return bool(self.new_clips) or bool(self.duplicate_clips)
 
 
 class IngestorError(Exception):

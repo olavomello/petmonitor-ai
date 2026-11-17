@@ -127,7 +127,6 @@ class Database:
     # ------------------------------------------------------------------
 
     def __call__(self, record: "ClipRecord") -> int:
-        """Make Database usable directly as Ingestor's db_writer callable."""
         return self.insert_clip(record)
 
     def insert_clip(self, record: "ClipRecord") -> int:

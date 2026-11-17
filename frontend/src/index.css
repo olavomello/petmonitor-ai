@@ -147,7 +147,6 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
 
 /* ── Dashboard grids ────────────────────────────────────────── */
 
-/* Three-column top: Branca | Marrie | Camera */
 .db-top {
   display: grid;
   grid-template-columns: 1fr 1fr 1.3fr;

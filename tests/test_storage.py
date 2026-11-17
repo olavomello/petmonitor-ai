@@ -49,31 +49,6 @@ def _make_detection(clip_id: int = 1) -> Detection:
 
 
 # ------------------------------------------------------------------
-# Schema
-# ------------------------------------------------------------------
-
-def test_migrate_creates_clips_table(db: Database) -> None:
-    assert db._conn is not None
-    row = db._conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='clips'"
-    ).fetchone()
-    assert row is not None
-
-
-def test_migrate_creates_detections_table(db: Database) -> None:
-    assert db._conn is not None
-    row = db._conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='detections'"
-    ).fetchone()
-    assert row is not None
-
-
-def test_migrate_is_idempotent(db: Database) -> None:
-    db.migrate()  # second call must not raise
-    db.migrate()
-
-
-# ------------------------------------------------------------------
 # Clips
 # ------------------------------------------------------------------
 

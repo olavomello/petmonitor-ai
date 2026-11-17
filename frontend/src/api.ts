@@ -95,9 +95,19 @@ export interface HeatmapResponse {
   note: string;
 }
 
-async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
-  const url = BASE + path;
-  const res = await fetch(url, {
+async function apiFetch<T>(
+  method: string,
+  path: string,
+  options?: { body?: unknown; params?: Record<string, string | number> },
+): Promise<T> {
+  const url = new URL(BASE + path, window.location.origin);
+  if (options?.params) {
+    for (const [k, v] of Object.entries(options.params)) {
+      url.searchParams.set(k, String(v));
+    }
+  }
+  const { body } = options ?? {};
+  const res = await fetch(url.toString(), {
     method,
     headers: body !== undefined ? { "Content-Type": "application/json" } : {},
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -109,16 +119,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return res.json() as Promise<T>;
 }
 
-async function get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
-  const url = new URL(BASE + path, window.location.origin);
-  if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      url.searchParams.set(k, String(v));
-    }
-  }
-  const res = await fetch(url.toString());
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json() as Promise<T>;
+function get<T>(path: string, params?: Record<string, string | number>): Promise<T> {
+  return apiFetch<T>("GET", path, { params });
+}
+
+function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  return apiFetch<T>(method, path, { body });
 }
 
 export const api = {

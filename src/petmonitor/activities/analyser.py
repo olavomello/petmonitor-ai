@@ -107,6 +107,7 @@ def get_activity_summary(events: list[dict]) -> dict:
                 STATE_MOVING: 0,
                 STATE_STATIONARY: 0,
                 STATE_NOT_VISIBLE: 0,
+                STATE_UNKNOWN: 0,
             }
         summary[identity][state] = summary[identity].get(state, 0) + 1
     return summary

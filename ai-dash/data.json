@@ -1,7 +1,16 @@
 {
-  "generated_at": "2026-11-17T05:48:32.547Z",
-  "log_records": 32,
+  "generated_at": "2026-11-17T15:02:31.172Z",
+  "log_records": 33,
   "recent": [
+    {
+      "ts": "2026-11-17T15:02:31.044Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 10177381,
+      "tokens_out": 24250
+    },
     {
       "ts": "2026-11-17T05:48:32.414Z",
       "task_type": "other",
@@ -82,35 +91,26 @@
       "gate": "pass",
       "tokens_in": 25548593,
       "tokens_out": 89548
-    },
-    {
-      "ts": "2026-11-17T02:32:57.328Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 1761574,
-      "tokens_out": 7982
     }
   ],
   "totals": {
-    "executions": 32,
-    "tokens_in": 106528926,
-    "tokens_out": 517686,
-    "cache_read": 104883784,
-    "cache_write": 1644208,
-    "tool_calls": 976,
-    "duration_s": 11792
+    "executions": 33,
+    "tokens_in": 116706307,
+    "tokens_out": 541936,
+    "cache_read": 114750942,
+    "cache_write": 1954349,
+    "tool_calls": 1068,
+    "duration_s": 12235
   },
   "rates": {
-    "cache_read_ratio": 0.985,
-    "gate_pass": 0.938,
-    "gate_first_pass": 0.875
+    "cache_read_ratio": 0.983,
+    "gate_pass": 0.939,
+    "gate_first_pass": 0.879
   },
   "cost": {
     "usd": 0,
     "priced_executions": 0,
-    "unpriced": 32
+    "unpriced": 33
   },
   "pr_split": {
     "mechanical": 0,
@@ -129,45 +129,45 @@
     },
     {
       "day": "2026-11-17",
-      "executions": 17,
-      "tokens_in": 79194408,
-      "tokens_out": 369524,
-      "cache_read": 78000191,
-      "cache_write": 1193529,
-      "tool_calls": 742,
-      "duration_s": 9089
+      "executions": 18,
+      "tokens_in": 89371789,
+      "tokens_out": 393774,
+      "cache_read": 87867349,
+      "cache_write": 1503670,
+      "tool_calls": 834,
+      "duration_s": 9532
     }
   ],
   "by_task": [
     {
       "task_type": "other",
-      "executions": 32,
-      "tokens_in": 106528926,
-      "tokens_out": 517686,
-      "cache_read": 104883784,
-      "cache_write": 1644208,
-      "tool_calls": 976,
-      "duration_s": 11792,
-      "gate_pass": 30,
-      "gate_first": 28,
-      "gate_rated": 32,
-      "gate_first_pass": 0.875
+      "executions": 33,
+      "tokens_in": 116706307,
+      "tokens_out": 541936,
+      "cache_read": 114750942,
+      "cache_write": 1954349,
+      "tool_calls": 1068,
+      "duration_s": 12235,
+      "gate_pass": 31,
+      "gate_first": 29,
+      "gate_rated": 33,
+      "gate_first_pass": 0.879
     }
   ],
   "by_agent": [
     {
       "agent": "main",
-      "executions": 31,
-      "tokens_in": 105445560,
-      "tokens_out": 508946,
-      "cache_read": 103908913,
-      "cache_write": 1535727,
-      "tool_calls": 964,
-      "duration_s": 11792,
-      "gate_pass": 29,
-      "gate_first": 27,
-      "gate_rated": 31,
-      "gate_first_pass": 0.871
+      "executions": 32,
+      "tokens_in": 115622941,
+      "tokens_out": 533196,
+      "cache_read": 113776071,
+      "cache_write": 1845868,
+      "tool_calls": 1056,
+      "duration_s": 12235,
+      "gate_pass": 30,
+      "gate_first": 28,
+      "gate_rated": 32,
+      "gate_first_pass": 0.875
     },
     {
       "agent": "sys-init-starter",
@@ -187,17 +187,17 @@
   "by_model": [
     {
       "model": "claude-sonnet-4-6",
-      "executions": 31,
-      "tokens_in": 106528926,
-      "tokens_out": 517686,
-      "cache_read": 104883784,
-      "cache_write": 1644208,
-      "tool_calls": 976,
-      "duration_s": 11792,
-      "gate_pass": 29,
-      "gate_first": 27,
-      "gate_rated": 31,
-      "gate_first_pass": 0.871
+      "executions": 32,
+      "tokens_in": 116706307,
+      "tokens_out": 541936,
+      "cache_read": 114750942,
+      "cache_write": 1954349,
+      "tool_calls": 1068,
+      "duration_s": 12235,
+      "gate_pass": 30,
+      "gate_first": 28,
+      "gate_rated": 32,
+      "gate_first_pass": 0.875
     },
     {
       "model": "unknown",
