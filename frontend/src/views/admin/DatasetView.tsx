@@ -121,6 +121,82 @@ function FrameCard({
   );
 }
 
+function PaginationBar({
+  offset,
+  total,
+  pageSize,
+  onOffset,
+}: {
+  offset: number;
+  total: number;
+  pageSize: number;
+  onOffset: (o: number) => void;
+}) {
+  const currentPage = Math.floor(offset / pageSize) + 1;
+  const totalPages = Math.ceil(total / pageSize);
+  const [gotoVal, setGotoVal] = useState(String(currentPage));
+
+  useEffect(() => { setGotoVal(String(currentPage)); }, [currentPage]);
+
+  function handleGoto() {
+    const p = parseInt(gotoVal, 10);
+    if (!isNaN(p) && p >= 1 && p <= totalPages) {
+      onOffset((p - 1) * pageSize);
+    }
+  }
+
+  if (total === 0) return null;
+
+  const btn = {
+    padding: "0.4rem 0.9rem",
+    borderRadius: "var(--radius-sm)",
+    border: "1px solid var(--border)",
+    background: "transparent",
+    color: "var(--text-secondary)",
+    fontSize: "0.85rem",
+    cursor: "pointer",
+  };
+
+  return (
+    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
+      <button onClick={() => onOffset(Math.max(0, offset - pageSize))} disabled={offset === 0} style={btn}>
+        ← Anterior
+      </button>
+      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", minWidth: "7rem", textAlign: "center" }}>
+        {offset + 1}–{Math.min(offset + pageSize, total)} de {total}
+      </span>
+      <button onClick={() => onOffset(offset + pageSize)} disabled={offset + pageSize >= total} style={btn}>
+        Próxima →
+      </button>
+      <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", marginLeft: "0.5rem" }}>
+        <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Ir p/</span>
+        <input
+          type="number"
+          min={1}
+          max={totalPages}
+          value={gotoVal}
+          onChange={(e) => setGotoVal(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleGoto()}
+          style={{
+            width: "3.2rem",
+            padding: "0.25rem 0.35rem",
+            borderRadius: "var(--radius-sm)",
+            border: "1px solid var(--border)",
+            background: "var(--bg-elevated)",
+            color: "var(--text-primary)",
+            fontSize: "0.82rem",
+            textAlign: "center",
+          }}
+        />
+        <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>/ {totalPages}</span>
+        <button onClick={handleGoto} style={{ ...btn, padding: "0.25rem 0.6rem", fontSize: "0.82rem" }}>
+          Ir
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function DatasetView() {
   const [frames, setFrames] = useState<Frame[]>([]);
   const [stats, setStats] = useState<FrameStats>({ total: 0 });
@@ -289,53 +365,20 @@ export default function DatasetView() {
         </p>
       ) : (
         <>
+          <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
               gap: "0.6rem",
-              marginBottom: "1rem",
+              margin: "0.75rem 0 1rem",
             }}
           >
             {frames.map((f, i) => (
               <FrameCard key={f.id} frame={f} onMark={handleMark} onLabel={() => setLabelIdx(i)} />
             ))}
           </div>
-
-          {/* Pagination */}
-          <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", justifyContent: "center" }}>
-            <button
-              onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
-              disabled={offset === 0}
-              style={{
-                padding: "0.4rem 0.9rem",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border)",
-                background: "transparent",
-                color: "var(--text-secondary)",
-                fontSize: "0.85rem",
-              }}
-            >
-              ← Anterior
-            </button>
-            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
-              {offset + 1}–{Math.min(offset + PAGE_SIZE, total)} de {total}
-            </span>
-            <button
-              onClick={() => setOffset(offset + PAGE_SIZE)}
-              disabled={offset + PAGE_SIZE >= total}
-              style={{
-                padding: "0.4rem 0.9rem",
-                borderRadius: "var(--radius-sm)",
-                border: "1px solid var(--border)",
-                background: "transparent",
-                color: "var(--text-secondary)",
-                fontSize: "0.85rem",
-              }}
-            >
-              Próxima →
-            </button>
-          </div>
+          <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
         </>
       )}
     </div>
