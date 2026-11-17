@@ -237,19 +237,31 @@ class BlinkAdapter:
         clips: list[ClipInfo] = []
 
         # Primary: use the account-level media API (works for owl/mini cameras).
-        # time=0 → since epoch → returns all stored clips regardless of age.
+        # Use a timestamp well before camera setup to fetch all stored clips.
+        # Blink API rejects epoch-0 silently; a valid historical date is required.
+        _BLINK_EPOCH = 1672531200  # 2023-01-01 UTC — before any clip could exist
         raw_clips: list = []
         base_url = getattr(getattr(self._blink, "urls", None), "base_url", "")
         try:
             from blinkpy.api import request_videos
 
-            response = await request_videos(self._blink, time=0)
-            media = (response or {}).get("media", [])
-            # Filter to this camera only when a name was specified.
-            if camera_name:
-                raw_clips = [m for m in media if m.get("camera_name") == cam.name]
-            else:
-                raw_clips = list(media)
+            page = 0
+            while True:
+                response = await request_videos(self._blink, time=_BLINK_EPOCH, page=page)
+                logger.debug("request_videos page=%d response keys=%s", page, list((response or {}).keys()))
+                media = (response or {}).get("media", [])
+                if not media:
+                    break
+                for item in media:
+                    # Filter by camera name when specified; media API uses "device" field.
+                    item_cam = item.get("device_name", item.get("device", item.get("camera_name", "")))
+                    if camera_name and item_cam != cam.name:
+                        continue
+                    raw_clips.append(item)
+                # Stop if fewer than expected; Blink pages at 25 items.
+                if len(media) < 25:
+                    break
+                page += 1
         except Exception as exc:
             logger.debug("request_videos failed (%s); falling back to cam.clips", exc)
 
