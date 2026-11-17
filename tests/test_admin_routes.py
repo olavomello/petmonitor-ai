@@ -8,10 +8,12 @@ import pytest
 
 from petmonitor.api.admin_routes import (
     BBoxItem,
+    BulkStatusPayload,
     FrameUpdate,
     LabelsPayload,
     _label_path,
     _scan_frames,
+    bulk_update_frame_status,
     get_frame_labels,
     get_frame_stats,
     list_frames,
@@ -291,3 +293,47 @@ def test_save_frame_labels_not_found(db: Database) -> None:
     with pytest.raises(HTTPException) as exc:
         save_frame_labels(9999, body=LabelsPayload(labels=[]), db=db)
     assert exc.value.status_code == 404
+
+
+# ------------------------------------------------------------------
+# bulk_update_frame_status
+# ------------------------------------------------------------------
+
+def test_bulk_update_frame_status(tmp_path: Path, db: Database) -> None:
+    clip_dir = tmp_path / "datasets" / "images" / "raw" / "1"
+    clip_dir.mkdir(parents=True)
+    for i in range(4):
+        (clip_dir / f"frame_{i:04d}.jpg").write_bytes(b"x")
+    _scan_frames(db, root=tmp_path)
+    frames = db.list_frames()
+    ids = [f["id"] for f in frames[:3]]
+
+    result = bulk_update_frame_status(body=BulkStatusPayload(ids=ids, status="keep"), db=db)
+
+    assert result["updated"] == 3
+    assert all(f["status"] == "keep" for f in result["frames"])
+    remaining = db.get_frame(frames[3]["id"])
+    assert remaining is not None
+    assert remaining["status"] == "pending"
+
+
+def test_bulk_update_invalid_status_raises(db: Database) -> None:
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException) as exc:
+        bulk_update_frame_status(body=BulkStatusPayload(ids=[1], status="bad"), db=db)
+    assert exc.value.status_code == 422
+
+
+def test_bulk_update_skips_missing_ids(tmp_path: Path, db: Database) -> None:
+    clip_dir = tmp_path / "datasets" / "images" / "raw" / "1"
+    clip_dir.mkdir(parents=True)
+    (clip_dir / "frame_0001.jpg").write_bytes(b"x")
+    _scan_frames(db, root=tmp_path)
+    frames = db.list_frames()
+
+    result = bulk_update_frame_status(
+        body=BulkStatusPayload(ids=[frames[0]["id"], 9999], status="discard"), db=db
+    )
+
+    assert result["updated"] == 1
+    assert result["frames"][0]["status"] == "discard"

@@ -152,4 +152,6 @@ export const adminApi = {
   extract: () => request<{ status: string; pid: number }>("POST", "/admin/extract"),
   runs: () => get<TrainingRun[]>("/admin/runs"),
   train: () => request<{ status: string; pid: number }>("POST", "/admin/train"),
+  bulkUpdateFrames: (ids: number[], status: string) =>
+    request<{ updated: number; frames: Frame[] }>("POST", "/admin/frames/bulk-status", { ids, status }),
 };

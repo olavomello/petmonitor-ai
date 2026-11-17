@@ -22,7 +22,7 @@ function StatsBar({ stats }: { stats: FrameStats }) {
     { label: "Labeled", value: stats.labeled ?? 0, color: STATUS_COLORS.labeled },
   ];
   return (
-    <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1rem" }}>
       {items.map((i) => (
         <div
           key={i.label}
@@ -30,8 +30,8 @@ function StatsBar({ stats }: { stats: FrameStats }) {
             background: "var(--bg-elevated)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius-sm)",
-            padding: "0.4rem 0.9rem",
-            fontSize: "0.85rem",
+            padding: "0.32rem 0.75rem",
+            fontSize: "0.82rem",
           }}
         >
           <span style={{ color: "var(--text-secondary)" }}>{i.label} </span>
@@ -42,81 +42,244 @@ function StatsBar({ stats }: { stats: FrameStats }) {
   );
 }
 
+function BulkBar({
+  count,
+  onKeep,
+  onDiscard,
+  onClear,
+}: {
+  count: number;
+  onKeep: () => void;
+  onDiscard: () => void;
+  onClear: () => void;
+}) {
+  if (count === 0) return null;
+  return (
+    <div
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        background: "var(--bg-card)",
+        border: "1px solid var(--teal)",
+        borderRadius: "var(--radius-sm)",
+        padding: "0.5rem 1rem",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.6rem",
+        marginBottom: "0.6rem",
+        boxShadow: "0 2px 12px rgba(0,180,216,0.12)",
+      }}
+    >
+      <span style={{ flex: 1, fontSize: "0.88rem", fontWeight: 600, color: "var(--teal)" }}>
+        {count} selecionado{count !== 1 ? "s" : ""}
+      </span>
+      <button
+        onClick={onKeep}
+        style={{
+          padding: "0.3rem 0.9rem",
+          borderRadius: "var(--radius-sm)",
+          background: "var(--teal)",
+          color: "#fff",
+          fontSize: "0.82rem",
+          fontWeight: 600,
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Keep
+      </button>
+      <button
+        onClick={onDiscard}
+        style={{
+          padding: "0.3rem 0.9rem",
+          borderRadius: "var(--radius-sm)",
+          background: "#e05252",
+          color: "#fff",
+          fontSize: "0.82rem",
+          fontWeight: 600,
+          border: "none",
+          cursor: "pointer",
+        }}
+      >
+        Descartar
+      </button>
+      <button
+        onClick={onClear}
+        style={{
+          padding: "0.3rem 0.8rem",
+          borderRadius: "var(--radius-sm)",
+          border: "1px solid var(--border)",
+          background: "transparent",
+          color: "var(--text-secondary)",
+          fontSize: "0.82rem",
+          cursor: "pointer",
+        }}
+      >
+        Limpar
+      </button>
+    </div>
+  );
+}
+
 function FrameCard({
   frame,
+  selected,
+  onToggleSelect,
   onMark,
   onLabel,
 }: {
   frame: Frame;
+  selected: boolean;
+  onToggleSelect: () => void;
   onMark: (id: number, status: string) => void;
   onLabel: () => void;
 }) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
       style={{
+        position: "relative",
         background: "var(--bg-elevated)",
-        border: `2px solid ${STATUS_COLORS[frame.status] ?? "var(--border)"}`,
+        border: `2px solid ${selected ? "var(--teal)" : STATUS_COLORS[frame.status] ?? "var(--border)"}`,
         borderRadius: "var(--radius-sm)",
         overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
       }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <img
         src={`/api/v1/admin/frames/${frame.id}/image`}
         alt={`clip ${frame.clip_id} frame ${frame.frame_index}`}
         loading="lazy"
         onClick={onLabel}
-        style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block", cursor: "pointer" }}
+        style={{
+          width: "100%",
+          aspectRatio: "4/3",
+          objectFit: "cover",
+          display: "block",
+          cursor: "pointer",
+        }}
       />
-      <div style={{ padding: "0.4rem 0.5rem" }}>
-        <div
+
+      {/* Status dot — always visible */}
+      <div
+        style={{
+          position: "absolute",
+          top: "0.4rem",
+          right: "0.4rem",
+          width: "7px",
+          height: "7px",
+          borderRadius: "50%",
+          background: STATUS_COLORS[frame.status] ?? "var(--border)",
+          boxShadow: "0 0 0 2px rgba(0,0,0,0.45)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Checkbox — hover or selected */}
+      {(hovered || selected) && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
           style={{
-            fontSize: "0.72rem",
-            color: "var(--text-muted)",
-            marginBottom: "0.35rem",
-            fontFamily: "monospace",
+            position: "absolute",
+            top: "0.35rem",
+            left: "0.35rem",
+            width: "20px",
+            height: "20px",
+            borderRadius: "4px",
+            border: `2px solid ${selected ? "var(--teal)" : "rgba(255,255,255,0.75)"}`,
+            background: selected ? "var(--teal)" : "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "0.65rem",
+            color: "#fff",
+            fontWeight: 700,
+            cursor: "pointer",
+            zIndex: 2,
           }}
         >
-          clip {frame.clip_id} · f{frame.frame_index}
-        </div>
-        <div style={{ display: "flex", gap: "0.3rem" }}>
-          <button
-            onClick={() => onMark(frame.id, "keep")}
-            aria-pressed={frame.status === "keep"}
+          {selected ? "✓" : ""}
+        </button>
+      )}
+
+      {/* Bottom action overlay — hover only */}
+      {hovered && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: "rgba(10, 20, 35, 0.9)",
+            padding: "0.38rem 0.4rem",
+            display: "flex",
+            gap: "0.28rem",
+            alignItems: "center",
+          }}
+        >
+          <span
             style={{
               flex: 1,
-              padding: "0.25rem 0",
-              fontSize: "0.75rem",
+              fontSize: "0.62rem",
+              color: "var(--text-muted)",
+              fontFamily: "monospace",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            c{frame.clip_id}·f{frame.frame_index}
+          </span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onMark(frame.id, "keep"); }}
+            style={{
+              padding: "0.2rem 0.45rem",
               borderRadius: "var(--radius-sm)",
-              background: frame.status === "keep" ? "var(--teal)" : "transparent",
-              color: frame.status === "keep" ? "#fff" : "var(--teal)",
-              border: `1px solid var(--teal)`,
-              fontWeight: 600,
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              border: "none",
               cursor: "pointer",
+              background: frame.status === "keep" ? "var(--teal)" : "rgba(0,180,216,0.2)",
+              color: "var(--teal)",
             }}
           >
             ✓
           </button>
           <button
-            onClick={() => onMark(frame.id, "discard")}
-            aria-pressed={frame.status === "discard"}
+            onClick={(e) => { e.stopPropagation(); onMark(frame.id, "discard"); }}
             style={{
-              flex: 1,
-              padding: "0.25rem 0",
-              fontSize: "0.75rem",
+              padding: "0.2rem 0.45rem",
               borderRadius: "var(--radius-sm)",
-              background: frame.status === "discard" ? "#e05252" : "transparent",
-              color: frame.status === "discard" ? "#fff" : "#e05252",
-              border: "1px solid #e05252",
-              fontWeight: 600,
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              border: "none",
               cursor: "pointer",
+              background: frame.status === "discard" ? "#e05252" : "rgba(224,82,82,0.2)",
+              color: "#e05252",
             }}
           >
             ✗
           </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onLabel(); }}
+            style={{
+              padding: "0.2rem 0.45rem",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              background: "rgba(167,139,250,0.2)",
+              color: "#a78bfa",
+            }}
+          >
+            ✏
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -148,28 +311,28 @@ function PaginationBar({
   if (total === 0) return null;
 
   const btn = {
-    padding: "0.4rem 0.9rem",
+    padding: "0.32rem 0.75rem",
     borderRadius: "var(--radius-sm)",
     border: "1px solid var(--border)",
     background: "transparent",
     color: "var(--text-secondary)",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     cursor: "pointer",
-  };
+  } as const;
 
   return (
     <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", justifyContent: "center", flexWrap: "wrap" }}>
       <button onClick={() => onOffset(Math.max(0, offset - pageSize))} disabled={offset === 0} style={btn}>
         ← Anterior
       </button>
-      <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", minWidth: "7rem", textAlign: "center" }}>
+      <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", minWidth: "7rem", textAlign: "center" }}>
         {offset + 1}–{Math.min(offset + pageSize, total)} de {total}
       </span>
       <button onClick={() => onOffset(offset + pageSize)} disabled={offset + pageSize >= total} style={btn}>
         Próxima →
       </button>
       <div style={{ display: "flex", gap: "0.3rem", alignItems: "center", marginLeft: "0.5rem" }}>
-        <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>Ir p/</span>
+        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>Ir p/</span>
         <input
           type="number"
           min={1}
@@ -178,8 +341,8 @@ function PaginationBar({
           onChange={(e) => setGotoVal(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleGoto()}
           style={{
-            width: "3.2rem",
-            padding: "0.25rem 0.35rem",
+            width: "3rem",
+            padding: "0.2rem 0.3rem",
             borderRadius: "var(--radius-sm)",
             border: "1px solid var(--border)",
             background: "var(--bg-elevated)",
@@ -188,10 +351,8 @@ function PaginationBar({
             textAlign: "center",
           }}
         />
-        <span style={{ fontSize: "0.82rem", color: "var(--text-muted)" }}>/ {totalPages}</span>
-        <button onClick={handleGoto} style={{ ...btn, padding: "0.25rem 0.6rem", fontSize: "0.82rem" }}>
-          Ir
-        </button>
+        <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>/ {totalPages}</span>
+        <button onClick={handleGoto} style={{ ...btn, padding: "0.2rem 0.5rem" }}>↵</button>
       </div>
     </div>
   );
@@ -206,6 +367,7 @@ export default function DatasetView() {
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [labelIdx, setLabelIdx] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const load = useCallback(async (f: Filter, o: number) => {
     setLoading(true);
@@ -226,16 +388,15 @@ export default function DatasetView() {
   }, []);
 
   useEffect(() => { load(filter, offset); }, [filter, offset, load]);
+  useEffect(() => { setSelectedIds(new Set()); }, [filter, offset]);
 
   async function handleScan() {
     setMsg(null);
     try {
       const r = await adminApi.scanFrames();
-      setMsg(`Scan completo: ${r.registered} frames registrados, ${r.total} no total.`);
+      setMsg(`Scan: ${r.registered} novos, ${r.total} total.`);
       await load(filter, offset);
-    } catch (e) {
-      setMsg(String(e));
-    }
+    } catch (e) { setMsg(String(e)); }
   }
 
   async function handleSplit() {
@@ -243,20 +404,34 @@ export default function DatasetView() {
     try {
       const r = await adminApi.splitDataset();
       setMsg(r.message ?? "Split concluído.");
-    } catch (e) {
-      setMsg(String(e));
-    }
+    } catch (e) { setMsg(String(e)); }
   }
 
   async function handleMark(id: number, status: string) {
     try {
       const updated = await adminApi.updateFrame(id, status);
       setFrames((prev) => prev.map((f) => (f.id === id ? updated : f)));
-      setStats((prev) => ({ ...prev }));
       await adminApi.frameStats().then(setStats);
-    } catch (e) {
-      setMsg(String(e));
-    }
+    } catch (e) { setMsg(String(e)); }
+  }
+
+  async function handleBulkMark(status: string) {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    try {
+      await adminApi.bulkUpdateFrames(ids, status);
+      setSelectedIds(new Set());
+      await load(filter, offset);
+    } catch (e) { setMsg(String(e)); }
+  }
+
+  function toggleSelect(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   function handleFrameUpdated(updated: Frame) {
@@ -264,124 +439,126 @@ export default function DatasetView() {
     adminApi.frameStats().then(setStats).catch(() => {});
   }
 
-  const FILTERS: { id: Filter; label: string }[] = [
+  const FILTERS: { id: Filter; label: string; color?: string }[] = [
     { id: "all", label: "Todos" },
-    { id: "pending", label: "Pending" },
-    { id: "keep", label: "Keep" },
-    { id: "discard", label: "Discard" },
-    { id: "labeled", label: "Labeled" },
+    { id: "pending", label: "Pending", color: STATUS_COLORS.pending },
+    { id: "keep", label: "Keep", color: STATUS_COLORS.keep },
+    { id: "discard", label: "Discard", color: STATUS_COLORS.discard },
+    { id: "labeled", label: "Labeled", color: "#a78bfa" },
   ];
 
   return (
     <>
-    {labelIdx !== null && (
-      <LabelModal
-        frames={frames}
-        initialIndex={labelIdx}
-        onClose={() => setLabelIdx(null)}
-        onFrameUpdated={handleFrameUpdated}
-      />
-    )}
-    <div>
-      {/* Toolbar */}
-      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-        <button
-          onClick={handleScan}
-          style={{
-            padding: "0.5rem 1.1rem",
-            background: "var(--teal)",
-            color: "#fff",
-            borderRadius: "var(--radius-sm)",
-            fontWeight: 600,
-            fontSize: "0.9rem",
-          }}
-        >
-          Scan frames
-        </button>
-        <button
-          onClick={handleSplit}
-          style={{
-            padding: "0.5rem 1.1rem",
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
-            color: "var(--text-primary)",
-            borderRadius: "var(--radius-sm)",
-            fontWeight: 600,
-            fontSize: "0.9rem",
-          }}
-        >
-          Split dataset
-        </button>
-      </div>
-
-      {/* Stats */}
-      <StatsBar stats={stats} />
-
-      {/* Message */}
-      {msg && (
-        <p
-          style={{
-            padding: "0.6rem 0.9rem",
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            fontSize: "0.85rem",
-            color: "var(--text-secondary)",
-            marginBottom: "0.75rem",
-          }}
-        >
-          {msg}
-        </p>
+      {labelIdx !== null && (
+        <LabelModal
+          frames={frames}
+          initialIndex={labelIdx}
+          onClose={() => setLabelIdx(null)}
+          onFrameUpdated={handleFrameUpdated}
+        />
       )}
-
-      {/* Filters */}
-      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-        {FILTERS.map((f) => (
+      <div>
+        {/* Toolbar */}
+        <div style={{ display: "flex", gap: "0.6rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           <button
-            key={f.id}
-            onClick={() => { setFilter(f.id); setOffset(0); }}
+            onClick={handleScan}
             style={{
-              padding: "0.3rem 0.8rem",
+              padding: "0.42rem 1rem",
+              background: "var(--teal)",
+              color: "#fff",
               borderRadius: "var(--radius-sm)",
-              fontSize: "0.85rem",
-              fontWeight: filter === f.id ? 600 : 400,
-              background: filter === f.id ? "rgba(0,180,216,0.12)" : "transparent",
-              color: filter === f.id ? "var(--teal)" : "var(--text-secondary)",
-              border: `1px solid ${filter === f.id ? "var(--teal)" : "var(--border)"}`,
+              fontWeight: 600,
+              fontSize: "0.88rem",
+              border: "none",
+              cursor: "pointer",
             }}
           >
-            {f.label}
+            Scan frames
           </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      {loading ? (
-        <p style={{ color: "var(--text-muted)" }}>Carregando…</p>
-      ) : frames.length === 0 ? (
-        <p style={{ color: "var(--text-muted)" }}>
-          Nenhum frame encontrado.{" "}
-          {stats.total === 0 && 'Clique em "Scan frames" para registrar.'}
-        </p>
-      ) : (
-        <>
-          <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
-          <div
+          <button
+            onClick={handleSplit}
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-              gap: "0.6rem",
-              margin: "0.75rem 0 1rem",
+              padding: "0.42rem 1rem",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              color: "var(--text-secondary)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "0.88rem",
+              cursor: "pointer",
             }}
           >
-            {frames.map((f, i) => (
-              <FrameCard key={f.id} frame={f} onMark={handleMark} onLabel={() => setLabelIdx(i)} />
-            ))}
-          </div>
-          <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
-        </>
-      )}
-    </div>
+            Split dataset
+          </button>
+          {msg && (
+            <span style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>{msg}</span>
+          )}
+        </div>
+
+        {/* Stats */}
+        <StatsBar stats={stats} />
+
+        {/* Filters */}
+        <div style={{ display: "flex", gap: "0.35rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => { setFilter(f.id); setOffset(0); }}
+              style={{
+                padding: "0.26rem 0.75rem",
+                borderRadius: "999px",
+                fontSize: "0.82rem",
+                fontWeight: filter === f.id ? 600 : 400,
+                background: filter === f.id ? "rgba(0,180,216,0.12)" : "transparent",
+                color: filter === f.id ? (f.color ?? "var(--teal)") : "var(--text-secondary)",
+                border: `1px solid ${filter === f.id ? (f.color ?? "var(--teal)") : "var(--border)"}`,
+                cursor: "pointer",
+              }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid */}
+        {loading ? (
+          <p style={{ color: "var(--text-muted)" }}>Carregando…</p>
+        ) : frames.length === 0 ? (
+          <p style={{ color: "var(--text-muted)" }}>
+            Nenhum frame encontrado.{" "}
+            {stats.total === 0 && 'Clique em "Scan frames" para registrar.'}
+          </p>
+        ) : (
+          <>
+            <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
+            <BulkBar
+              count={selectedIds.size}
+              onKeep={() => handleBulkMark("keep")}
+              onDiscard={() => handleBulkMark("discard")}
+              onClear={() => setSelectedIds(new Set())}
+            />
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))",
+                gap: "0.5rem",
+                margin: "0.75rem 0 1rem",
+              }}
+            >
+              {frames.map((f, i) => (
+                <FrameCard
+                  key={f.id}
+                  frame={f}
+                  selected={selectedIds.has(f.id)}
+                  onToggleSelect={() => toggleSelect(f.id)}
+                  onMark={handleMark}
+                  onLabel={() => setLabelIdx(i)}
+                />
+              ))}
+            </div>
+            <PaginationBar offset={offset} total={total} pageSize={PAGE_SIZE} onOffset={setOffset} />
+          </>
+        )}
+      </div>
     </>
   );
 }

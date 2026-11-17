@@ -18,10 +18,13 @@ export default function AdminView() {
     <div>
       <div
         style={{
-          display: "flex",
-          gap: "0.25rem",
-          borderBottom: "1px solid var(--border)",
-          marginBottom: "1.25rem",
+          display: "inline-flex",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius)",
+          padding: "0.25rem",
+          gap: "0.2rem",
+          marginBottom: "1.5rem",
         }}
       >
         {TABS.map((t) => (
@@ -30,14 +33,12 @@ export default function AdminView() {
             onClick={() => setTab(t.id)}
             aria-current={tab === t.id ? "page" : undefined}
             style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "var(--radius-sm) var(--radius-sm) 0 0",
+              padding: "0.4rem 1.1rem",
+              borderRadius: "var(--radius-sm)",
               fontWeight: tab === t.id ? 600 : 400,
-              color: tab === t.id ? "var(--teal)" : "var(--text-secondary)",
+              color: tab === t.id ? "var(--text-primary)" : "var(--text-secondary)",
               background: tab === t.id ? "var(--bg-surface)" : "transparent",
-              borderBottom: tab === t.id ? "2px solid var(--teal)" : "2px solid transparent",
-              marginBottom: -1,
-              fontSize: "0.9rem",
+              fontSize: "0.88rem",
             }}
           >
             {t.label}

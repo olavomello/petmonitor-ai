@@ -215,6 +215,27 @@ def update_frame(
     return updated
 
 
+class BulkStatusPayload(BaseModel):
+    ids: list[int]
+    status: str
+
+
+@router.post("/frames/bulk-status")
+def bulk_update_frame_status(body: BulkStatusPayload, db: Database = Depends(get_db)) -> dict:
+    if body.status not in _VALID_STATUSES:
+        raise HTTPException(status_code=422, detail=f"status must be one of {_VALID_STATUSES}")
+    updated = []
+    for frame_id in body.ids:
+        frame = db.get_frame(frame_id)
+        if frame is None:
+            continue
+        db.update_frame_status(frame_id, body.status)
+        result = db.get_frame(frame_id)
+        if result is not None:
+            updated.append(result)
+    return {"updated": len(updated), "frames": updated}
+
+
 # ------------------------------------------------------------------
 # Dataset split
 # ------------------------------------------------------------------
