@@ -9,8 +9,8 @@
     },
     {
       "name": "api",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "petmonitor.api.main"],
+      "runtimeExecutable": ".venv/Scripts/petmonitor-api.exe",
+      "runtimeArgs": [],
       "port": 8000
     }
   ]
