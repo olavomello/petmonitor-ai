@@ -1,4 +1,4 @@
-export type View = "dashboard" | "activity" | "heatmap" | "admin";
+export type View = "dashboard" | "activity" | "events" | "heatmap" | "camera" | "admin" | "settings";
 
 export type NavItem = {
   id: View | null;
@@ -69,18 +69,18 @@ export const NavIcons = {
 export const NAV_SIDEBAR: NavItem[] = [
   { id: "dashboard", label: "Dashboard", iconKey: "dashboard", available: true },
   { id: "activity", label: "Activities", iconKey: "activity", available: true },
-  { id: null, label: "Events", iconKey: "events", available: false },
+  { id: "events", label: "Events", iconKey: "events", available: true },
   { id: null, label: "Trajectories", iconKey: "trajectories", available: false },
   { id: "heatmap", label: "Heatmap", iconKey: "heatmap", available: true },
-  { id: null, label: "Camera", iconKey: "camera", available: false },
+  { id: "camera", label: "Camera", iconKey: "camera", available: true },
   { id: "admin", label: "AI Models", iconKey: "models", available: true },
-  { id: null, label: "Settings", iconKey: "settings", available: false },
+  { id: "settings", label: "Settings", iconKey: "settings", available: true },
 ];
 
 export const NAV_BOTTOM: NavItem[] = [
   { id: "dashboard", label: "Dashboard", iconKey: "dashboard", available: true },
   { id: "activity", label: "Activities", iconKey: "activity", available: true },
-  { id: null, label: "Events", iconKey: "events", available: false },
-  { id: null, label: "Trajectories", iconKey: "trajectories", available: false },
+  { id: "events", label: "Events", iconKey: "events", available: true },
+  { id: "camera", label: "Camera", iconKey: "camera", available: true },
   { id: "admin", label: "Models", iconKey: "models", available: true },
 ];

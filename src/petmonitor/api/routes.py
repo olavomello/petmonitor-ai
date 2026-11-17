@@ -5,11 +5,17 @@ from __future__ import annotations
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.responses import FileResponse
 
 from petmonitor.activities.analyser import compute_heatmap, get_activity_summary
 from petmonitor.api.deps import get_db
 from petmonitor.storage.database import Database
+
+_CLIPS_ROOT = Path("data").resolve()
+_THUMB_DIR = Path("data/thumbnails")
 
 try:
     _VERSION = _pkg_version("petmonitor-ai")
@@ -77,6 +83,57 @@ def get_activity(
         "summary": summary,
         "note": "Counts reflect individual track events from processed footage.",
     }
+
+
+@router.get("/clips/{clip_id}/thumbnail")
+def get_clip_thumbnail(clip_id: int, db: Database = Depends(get_db)):  # pragma: no cover
+    """Extract and serve the first frame of a clip as JPEG, cached to disk."""
+    import cv2
+
+    clip = db.get_clip(clip_id)
+    if clip is None:
+        raise HTTPException(status_code=404, detail="Clip not found")
+
+    local_path = Path(clip["local_path"])
+    try:
+        local_path.resolve().relative_to(_CLIPS_ROOT)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not local_path.exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+
+    _THUMB_DIR.mkdir(parents=True, exist_ok=True)
+    thumb_path = _THUMB_DIR / f"{clip['sha256'][:16]}.jpg"
+
+    if not thumb_path.exists():
+        cap = cv2.VideoCapture(str(local_path))
+        ok, frame = cap.read()
+        cap.release()
+        if not ok:
+            raise HTTPException(status_code=500, detail="Cannot extract frame")
+        cv2.imwrite(str(thumb_path), frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+
+    return FileResponse(str(thumb_path), media_type="image/jpeg")
+
+
+@router.get("/clips/{clip_id}/video")
+def get_clip_video(clip_id: int, db: Database = Depends(get_db)):  # pragma: no cover
+    """Serve the raw MP4 clip file."""
+    clip = db.get_clip(clip_id)
+    if clip is None:
+        raise HTTPException(status_code=404, detail="Clip not found")
+
+    local_path = Path(clip["local_path"])
+    try:
+        local_path.resolve().relative_to(_CLIPS_ROOT)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    if not local_path.exists():
+        raise HTTPException(status_code=404, detail="Video file not found")
+
+    return FileResponse(str(local_path), media_type="video/mp4")
 
 
 @router.get("/heatmap/{identity}")

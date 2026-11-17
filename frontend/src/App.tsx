@@ -4,6 +4,9 @@ import Dashboard from "./views/Dashboard";
 import Activity from "./views/Activity";
 import HeatmapView from "./views/HeatmapView";
 import AdminView from "./views/admin/AdminView";
+import EventsView from "./views/EventsView";
+import CameraView from "./views/CameraView";
+import SettingsView from "./views/SettingsView";
 import { NavIcons, NAV_BOTTOM, type View } from "./nav";
 
 type Theme = "dark" | "light";
@@ -109,8 +112,11 @@ export default function App() {
         <main className="page-content">
           {view === "dashboard" && <Dashboard onNavigate={setView} />}
           {view === "activity" && <Activity />}
+          {view === "events" && <EventsView />}
           {view === "heatmap" && <HeatmapView />}
+          {view === "camera" && <CameraView onNavigate={(v) => setView(v)} />}
           {view === "admin" && <AdminView />}
+          {view === "settings" && <SettingsView />}
         </main>
         <BottomNav active={view} onNavigate={setView} />
       </div>

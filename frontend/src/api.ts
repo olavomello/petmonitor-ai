@@ -50,6 +50,16 @@ export interface StatusResponse {
   blink_connected?: boolean;
 }
 
+export interface BlinkStatus {
+  status: "not_configured" | "configured" | "file_invalid";
+  has_pending_2fa: boolean;
+}
+
+export interface PipelineResult {
+  status: string;
+  pid?: number;
+}
+
 export interface Clip {
   id: number;
   sha256: string;
@@ -136,6 +146,13 @@ export const api = {
     get<ActivityResponse>("/activity", identity ? { identity } : undefined),
   heatmap: (identity: string, grid_w = 50, grid_h = 50) =>
     get<HeatmapResponse>(`/heatmap/${encodeURIComponent(identity)}`, { grid_w, grid_h }),
+  blinkStatus: () => get<BlinkStatus>("/blink/status"),
+  blinkAuthStart: (email: string, password: string) =>
+    request<{ status: string }>("POST", "/blink/auth/start", { email, password }),
+  blinkAuthVerify: (code: string) =>
+    request<{ status: string }>("POST", "/blink/auth/verify", { code }),
+  clipThumbnailUrl: (clipId: number) => `${BASE}/clips/${clipId}/thumbnail`,
+  clipVideoUrl: (clipId: number) => `${BASE}/clips/${clipId}/video`,
 };
 
 export const adminApi = {
@@ -155,10 +172,13 @@ export const adminApi = {
   saveFrameLabels: (id: number, labels: BBox[]) =>
     request<Frame>("POST", `/admin/frames/${id}/labels`, { labels }),
   clips: (limit = 50, offset = 0) => get<Clip[]>("/admin/clips", { limit, offset }),
-  sync: () => request<{ status: string; pid: number }>("POST", "/admin/sync"),
-  extract: () => request<{ status: string; pid: number }>("POST", "/admin/extract"),
+  sync: () => request<PipelineResult>("POST", "/admin/sync"),
+  extract: () => request<PipelineResult>("POST", "/admin/extract"),
+  detect: () => request<PipelineResult>("POST", "/admin/detect"),
+  track: () => request<PipelineResult>("POST", "/admin/track"),
+  analyse: () => request<PipelineResult>("POST", "/admin/analyse"),
   runs: () => get<TrainingRun[]>("/admin/runs"),
-  train: () => request<{ status: string; pid: number }>("POST", "/admin/train"),
+  train: () => request<PipelineResult>("POST", "/admin/train"),
   bulkUpdateFrames: (ids: number[], status: string) =>
     request<{ updated: number; frames: Frame[] }>("POST", "/admin/frames/bulk-status", { ids, status }),
 };

@@ -308,6 +308,24 @@ def list_runs() -> list:
     return runs
 
 
+@router.post("/detect")
+def trigger_detect() -> dict:
+    """Spawn detection on all clips that have no detections yet."""
+    return _spawn(_get_script("petmonitor-detect"), [])
+
+
+@router.post("/track")
+def trigger_track() -> dict:
+    """Spawn tracking on all clips that have detections but no tracks."""
+    return _spawn(_get_script("petmonitor-track"), [])
+
+
+@router.post("/analyse")
+def trigger_analyse() -> dict:
+    """Spawn activity analysis on all tracks without activity events."""
+    return _spawn(_get_script("petmonitor-analyse"), [])
+
+
 @router.post("/train")
 def trigger_train() -> dict:
     return _spawn(sys.executable, ["scripts/train.py"])

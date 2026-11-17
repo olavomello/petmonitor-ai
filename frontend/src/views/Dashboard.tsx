@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type Clip, type Pet, type StatusResponse } from "../api";
+import { api, type BlinkStatus, type Clip, type Pet, type StatusResponse } from "../api";
 import type { View } from "../nav";
 
 const PET_COLOR: Record<string, string> = {
@@ -293,6 +293,44 @@ function HeatmapPanel({ onNavigate }: { onNavigate: () => void }) {
   );
 }
 
+function BlinkBanner({ blinkStatus, onConfigure }: { blinkStatus: BlinkStatus | null; onConfigure: () => void }) {
+  if (!blinkStatus || blinkStatus.status === "configured") return null;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      background: "rgba(239,68,68,0.08)",
+      border: "1px solid rgba(239,68,68,0.3)",
+      borderRadius: "var(--radius)",
+      padding: "0.65rem 1rem",
+      marginBottom: "1rem",
+      gap: "1rem",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="7" cy="7" r="6" stroke="#f87171" strokeWidth="1.5" />
+          <path d="M7 4v3M7 9.5v.5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+        <span style={{ fontSize: "0.82rem", color: "#f87171" }}>
+          {blinkStatus.status === "not_configured"
+            ? "Blink camera not configured — no new clips will be downloaded"
+            : "Blink credentials file is invalid"}
+        </span>
+      </div>
+      <button
+        onClick={onConfigure}
+        style={{
+          fontSize: "0.76rem", fontWeight: 600, color: "#f87171",
+          background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.3)",
+          borderRadius: "var(--radius-sm)", padding: "0.3rem 0.7rem", cursor: "pointer",
+          whiteSpace: "nowrap", flexShrink: 0,
+        }}
+      >
+        Configure →
+      </button>
+    </div>
+  );
+}
+
 function RecentEvents({ clips }: { clips: Clip[] }) {
   if (clips.length === 0) {
     return (
@@ -327,21 +365,31 @@ function RecentEvents({ clips }: { clips: Clip[] }) {
       }}>
         {clips.slice(0, 5).map((clip) => {
           const name = clip.original_filename.split("\\").pop()?.split("/").pop() ?? clip.original_filename;
+          const thumbUrl = api.clipThumbnailUrl(clip.id);
           return (
             <div key={clip.id} style={{
               background: "var(--bg-elevated)",
               borderRadius: "var(--radius-sm)",
               border: "1px solid var(--border)",
               overflow: "hidden",
+              cursor: "pointer",
             }}>
-              <div style={{
-                height: 76, background: "#080f1a",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" opacity={0.25}>
-                  <rect x="2" y="4" width="20" height="16" rx="2" stroke="#94a3b8" strokeWidth="1.5" />
-                  <circle cx="12" cy="12" r="3" stroke="#94a3b8" strokeWidth="1.5" />
-                </svg>
+              <div style={{ height: 76, background: "#080f1a", position: "relative", overflow: "hidden" }}>
+                <img
+                  src={thumbUrl}
+                  alt={name}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                />
+                {clip.detection_count > 0 && (
+                  <div style={{
+                    position: "absolute", top: 4, right: 4,
+                    background: "rgba(0,0,0,0.7)", borderRadius: 999,
+                    padding: "1px 6px", fontSize: "0.6rem", color: "var(--teal)", fontWeight: 700,
+                  }}>
+                    {clip.detection_count} det
+                  </div>
+                )}
               </div>
               <div style={{ padding: "0.55rem 0.65rem" }}>
                 <div style={{
@@ -399,13 +447,14 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [pets, setPets] = useState<Pet[]>([]);
   const [clips, setClips] = useState<Clip[]>([]);
+  const [blinkStatus, setBlinkStatus] = useState<BlinkStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.status(), api.pets(), api.clips(10)])
-      .then(([s, p, c]) => { setStatus(s); setPets(p); setClips(c); })
+    Promise.all([api.status(), api.pets(), api.clips(10), api.blinkStatus().catch(() => null)])
+      .then(([s, p, c, bs]) => { setStatus(s); setPets(p); setClips(c); setBlinkStatus(bs); })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, []);
@@ -450,6 +499,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
           {today}
         </p>
       </div>
+
+      {/* Blink offline banner */}
+      <BlinkBanner blinkStatus={blinkStatus} onConfigure={() => onNavigate("settings")} />
 
       {/* Summary stats */}
       {status && <DaySummary status={status} />}
