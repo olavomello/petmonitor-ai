@@ -266,7 +266,7 @@ export default function DatasetView() {
       ) : frames.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>
           Nenhum frame encontrado.{" "}
-          {stats.total === 0 && "Clique em "Scan frames" para registrar."}
+          {stats.total === 0 && 'Clique em "Scan frames" para registrar.'}
         </p>
       ) : (
         <>
