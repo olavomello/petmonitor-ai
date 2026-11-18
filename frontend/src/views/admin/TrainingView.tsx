@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { adminApi, type TrainingRun } from "../../api";
+import { adminApi, type ActiveModelResponse, type TrainingRun } from "../../api";
 
 function formatDt(s: string | null | undefined): string {
   if (!s) return "—";
@@ -8,21 +8,44 @@ function formatDt(s: string | null | undefined): string {
   } catch { return s; }
 }
 
+function formatBytes(b: number): string {
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(0)} KB`;
+  return `${(b / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function TrainingView() {
   const [runs, setRuns] = useState<TrainingRun[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
+  const [activeModel, setActiveModel] = useState<ActiveModelResponse | null>(null);
+  const [activating, setActivating] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   async function load(silent = false) {
     if (!silent) setLoading(true);
     try {
-      setRuns(await adminApi.runs());
+      const [runsData, modelData] = await Promise.all([adminApi.runs(), adminApi.activeModel()]);
+      setRuns(runsData);
+      setActiveModel(modelData);
     } catch (e) {
       setMsg(String(e));
     } finally {
       if (!silent) setLoading(false);
+    }
+  }
+
+  async function activateRun(runName: string) {
+    setActivating(runName);
+    setMsg(null);
+    try {
+      const r = await adminApi.activateRun(runName);
+      setMsg(`Model activated: ${r.activated} (${formatBytes(r.size_bytes)})`);
+      await load(true);
+    } catch (e) {
+      setMsg(`Error: ${e}`);
+    } finally {
+      setActivating(null);
     }
   }
 
@@ -59,6 +82,36 @@ export default function TrainingView() {
 
   return (
     <div>
+      {/* Active model banner */}
+      {activeModel !== null && (
+        <div style={{
+          background: activeModel.active ? "color-mix(in srgb, var(--teal) 12%, var(--bg-card))" : "var(--bg-card)",
+          border: `1px solid ${activeModel.active ? "var(--teal)" : "var(--border)"}`,
+          borderRadius: "var(--radius)",
+          padding: "0.65rem 1rem",
+          marginBottom: "1.25rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.6rem",
+          fontSize: "0.82rem",
+        }}>
+          <span style={{ fontSize: "1rem" }}>{activeModel.active ? "✅" : "⚠️"}</span>
+          {activeModel.active ? (
+            <span>
+              <strong style={{ color: "var(--teal)" }}>Active model:</strong>{" "}
+              <code style={{ fontSize: "0.78rem" }}>models/best.pt</code>
+              {activeModel.size_bytes !== null && (
+                <span style={{ color: "var(--text-muted)", marginLeft: "0.5rem" }}>({formatBytes(activeModel.size_bytes)})</span>
+              )}
+            </span>
+          ) : (
+            <span style={{ color: "var(--text-secondary)" }}>
+              No active model — activate a training run below to enable detection.
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Step-by-step guide */}
       <div style={{
         background: "var(--bg-card)", border: "1px solid var(--border)",
@@ -146,6 +199,7 @@ export default function TrainingView() {
                 <th style={{ padding: "0.5rem 0.75rem" }}>Started</th>
                 <th style={{ padding: "0.5rem 0.75rem", textAlign: "center" }}>Weights</th>
                 <th style={{ padding: "0.5rem 0.75rem" }}>Metrics / Status</th>
+                <th style={{ padding: "0.5rem 0.75rem" }}></th>
               </tr>
             </thead>
             <tbody>
@@ -173,6 +227,27 @@ export default function TrainingView() {
                       <span style={{ color: "var(--text-muted)" }}>Done — no metrics</span>
                     ) : (
                       <span style={{ color: "var(--teal)" }}>Running…</span>
+                    )}
+                  </td>
+                  <td style={{ padding: "0.5rem 0.75rem" }}>
+                    {r.has_best_weights && (
+                      <button
+                        onClick={() => activateRun(r.name)}
+                        disabled={activating === r.name}
+                        style={{
+                          padding: "0.3rem 0.7rem",
+                          background: "var(--teal)",
+                          color: "#fff",
+                          borderRadius: "var(--radius-sm)",
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
+                          opacity: activating === r.name ? 0.6 : 1,
+                          cursor: activating === r.name ? "not-allowed" : "pointer",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {activating === r.name ? "Activating…" : "Set as active"}
+                      </button>
                     )}
                   </td>
                 </tr>

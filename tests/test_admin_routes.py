@@ -13,7 +13,9 @@ from petmonitor.api.admin_routes import (
     LabelsPayload,
     _label_path,
     _scan_frames,
+    activate_run,
     bulk_update_frame_status,
+    get_active_model,
     get_frame_labels,
     get_frame_stats,
     list_frames,
@@ -337,3 +339,66 @@ def test_bulk_update_skips_missing_ids(tmp_path: Path, db: Database) -> None:
 
     assert result["updated"] == 1
     assert result["frames"][0]["status"] == "discard"
+
+
+# ------------------------------------------------------------------
+# get_active_model / activate_run
+# ------------------------------------------------------------------
+
+def test_get_active_model_no_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    result = get_active_model()
+    assert result["active"] is False
+    assert result["path"] is None
+
+
+def test_get_active_model_with_file(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    models_dir = tmp_path / "models"
+    models_dir.mkdir()
+    (models_dir / "best.pt").write_bytes(b"weights" * 100)
+
+    result = get_active_model()
+    assert result["active"] is True
+    assert result["size_bytes"] == 700
+
+
+def test_activate_run_copies_weights(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "runs" / "detect" / "train1"
+    (run_dir / "weights").mkdir(parents=True)
+    (run_dir / "weights" / "best.pt").write_bytes(b"model_data")
+
+    result = activate_run("train1")
+    assert result["activated"] == "train1"
+    assert result["size_bytes"] == 10
+    dest = tmp_path / "models" / "best.pt"
+    assert dest.exists()
+    assert dest.read_bytes() == b"model_data"
+
+
+def test_activate_run_not_found_raises(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from fastapi import HTTPException
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "runs").mkdir()
+    with pytest.raises(HTTPException) as exc:
+        activate_run("nonexistent")
+    assert exc.value.status_code == 404
+
+
+def test_activate_run_no_runs_dir_raises(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from fastapi import HTTPException
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(HTTPException) as exc:
+        activate_run("train1")
+    assert exc.value.status_code == 404
+
+
+def test_activate_run_no_weights_raises(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from fastapi import HTTPException
+    monkeypatch.chdir(tmp_path)
+    run_dir = tmp_path / "runs" / "train1"
+    run_dir.mkdir(parents=True)
+    with pytest.raises(HTTPException) as exc:
+        activate_run("train1")
+    assert exc.value.status_code == 404

@@ -388,3 +388,67 @@ def trigger_analyse() -> dict:
 @router.post("/train")
 def trigger_train() -> dict:
     return _spawn(sys.executable, ["scripts/train.py"])
+
+
+# ------------------------------------------------------------------
+# Active model management
+# ------------------------------------------------------------------
+
+@router.get("/active-model")
+def get_active_model() -> dict:
+    """Return info about the currently active model (models/best.pt)."""
+    import time as _time
+    dest = Path("models") / "best.pt"
+    if not dest.exists():
+        return {"active": False, "path": None, "size_bytes": None, "mtime": None}
+    stat = dest.stat()
+    return {
+        "active": True,
+        "path": str(dest),
+        "size_bytes": stat.st_size,
+        "mtime": stat.st_mtime,
+    }
+
+
+@router.post("/runs/{run_name}/activate")
+def activate_run(run_name: str) -> dict:
+    """Copy a training run's best.pt to models/best.pt, making it the active model."""
+    import shutil
+
+    runs_dir = Path("runs")
+    models_dir = Path("models")
+
+    if not runs_dir.exists():
+        raise HTTPException(status_code=404, detail="No runs/ directory found")
+
+    # Find the run directory — handle both flat (runs/trainX) and nested (runs/detect/trainX)
+    run_dir: Path | None = None
+    for candidate in runs_dir.rglob("*"):
+        if candidate.is_dir() and candidate.name == run_name:
+            run_dir = candidate
+            break
+
+    if run_dir is None:
+        raise HTTPException(status_code=404, detail=f"Run '{run_name}' not found")
+
+    weights_path = run_dir / "weights" / "best.pt"
+    if not weights_path.exists():
+        raise HTTPException(status_code=404, detail="best.pt not found for this run")
+
+    # Path traversal guard
+    runs_root = runs_dir.resolve()
+    try:
+        weights_path.resolve().relative_to(runs_root)
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    models_dir.mkdir(parents=True, exist_ok=True)
+    dest = models_dir / "best.pt"
+    shutil.copy2(str(weights_path), str(dest))
+
+    return {
+        "activated": run_name,
+        "source": str(weights_path),
+        "destination": str(dest),
+        "size_bytes": dest.stat().st_size,
+    }

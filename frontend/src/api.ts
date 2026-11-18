@@ -216,6 +216,20 @@ export const api = {
   deleteReference: (refId: number) => apiFetch<void>("DELETE", `/pets/references/${refId}`),
 };
 
+export interface ActiveModelResponse {
+  active: boolean;
+  path: string | null;
+  size_bytes: number | null;
+  mtime: number | null;
+}
+
+export interface ActivateRunResponse {
+  activated: string;
+  source: string;
+  destination: string;
+  size_bytes: number;
+}
+
 export const adminApi = {
   frames: (limit = 100, offset = 0, status?: string) =>
     get<FramesResponse>("/admin/frames", {
@@ -240,6 +254,8 @@ export const adminApi = {
   analyse: () => request<PipelineResult>("POST", "/admin/analyse"),
   runs: () => get<TrainingRun[]>("/admin/runs"),
   train: () => request<PipelineResult>("POST", "/admin/train"),
+  activeModel: () => get<ActiveModelResponse>("/admin/active-model"),
+  activateRun: (runName: string) => request<ActivateRunResponse>("POST", `/admin/runs/${encodeURIComponent(runName)}/activate`),
   bulkUpdateFrames: (ids: number[], status: string) =>
     request<{ updated: number; frames: Frame[] }>("POST", "/admin/frames/bulk-status", { ids, status }),
 };
