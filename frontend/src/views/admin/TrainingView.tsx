@@ -135,19 +135,52 @@ export default function TrainingView() {
         </ol>
       </div>
 
+      {/* Training in progress banner */}
+      {polling && (
+        <div style={{
+          background: "color-mix(in srgb, var(--teal) 10%, var(--bg-card))",
+          border: "1px solid var(--teal)",
+          borderRadius: "var(--radius)",
+          padding: "0.75rem 1rem",
+          marginBottom: "1rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+          fontSize: "0.85rem",
+        }}>
+          <span className="spinner" style={{ color: "var(--teal)", width: "1.1rem", height: "1.1rem", borderWidth: "2.5px" }} />
+          <span>
+            <strong style={{ color: "var(--teal)" }}>Training in progress</strong>
+            <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>— auto-refreshing every 15 s</span>
+          </span>
+          <button
+            onClick={stopPolling}
+            style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--text-muted)", textDecoration: "underline", padding: 0 }}
+          >
+            stop watching
+          </button>
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={triggerTrain}
+          disabled={polling}
           style={{
             padding: "0.5rem 1.1rem",
-            background: "var(--teal)",
-            color: "#fff",
+            background: polling ? "var(--border)" : "var(--teal)",
+            color: polling ? "var(--text-muted)" : "#fff",
             borderRadius: "var(--radius-sm)",
             fontWeight: 600,
             fontSize: "0.9rem",
+            cursor: polling ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
           }}
         >
-          Start training
+          {polling && <span className="spinner" style={{ width: "0.85rem", height: "0.85rem" }} />}
+          {polling ? "Training…" : "Start training"}
         </button>
         <button
           onClick={() => load()}
@@ -162,22 +195,16 @@ export default function TrainingView() {
         >
           Reload
         </button>
-        {polling && (
-          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-            Auto-refreshing…
-            <button onClick={stopPolling} style={{ marginLeft: "0.4rem", fontSize: "0.72rem", background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", textDecoration: "underline" }}>stop</button>
-          </span>
-        )}
       </div>
       {msg && (
         <p
           style={{
             padding: "0.6rem 0.9rem",
             background: "var(--bg-elevated)",
-            border: "1px solid var(--border)",
+            border: `1px solid ${msg.startsWith("Error") ? "var(--danger)" : "var(--border)"}`,
             borderRadius: "var(--radius-sm)",
             fontSize: "0.85rem",
-            color: "var(--text-secondary)",
+            color: msg.startsWith("Error") ? "var(--danger)" : "var(--text-secondary)",
             marginBottom: "1rem",
           }}
         >
@@ -185,7 +212,10 @@ export default function TrainingView() {
         </p>
       )}
       {loading ? (
-        <p style={{ color: "var(--text-muted)" }}>Loading…</p>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-muted)", padding: "0.5rem 0" }}>
+          <span className="spinner" style={{ width: "1rem", height: "1rem" }} />
+          <span>Loading…</span>
+        </div>
       ) : runs.length === 0 ? (
         <p style={{ color: "var(--text-muted)" }}>
           No training runs found in <code>runs/</code>. Start one above.
@@ -226,7 +256,10 @@ export default function TrainingView() {
                     ) : r.finished_at ? (
                       <span style={{ color: "var(--text-muted)" }}>Done — no metrics</span>
                     ) : (
-                      <span style={{ color: "var(--teal)" }}>Running…</span>
+                      <span style={{ color: "var(--teal)", display: "inline-flex", alignItems: "center", gap: "0.4rem" }}>
+                        <span className="spinner" style={{ width: "0.75rem", height: "0.75rem" }} />
+                        Running…
+                      </span>
                     )}
                   </td>
                   <td style={{ padding: "0.5rem 0.75rem" }}>

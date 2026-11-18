@@ -54,6 +54,23 @@ button { cursor: pointer; border: none; background: none; color: inherit; font: 
   border: 0;
 }
 
+/* ── Spinner animation ──────────────────────────────────────── */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  display: inline-block;
+  width: 1em; height: 1em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 /* ── App shell layout ───────────────────────────────────────── */
 
 .app-shell {
