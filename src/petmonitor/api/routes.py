@@ -48,7 +48,6 @@ def get_clip(clip_id: int, db: Database = Depends(get_db)) -> dict:
     return clip
 
 
-@router.get("/pets")
 def get_pets(db: Database = Depends(get_db)) -> list:
     pets = db.list_pets(active_only=True)
     identity_stats = {row["identity"]: row for row in db.get_identity_stats()}
@@ -65,6 +64,19 @@ def get_pets(db: Database = Depends(get_db)) -> list:
             }
         )
     return result
+
+
+@router.get("/clips/{clip_id}/detections")
+def get_clip_detections(clip_id: int, db: Database = Depends(get_db)) -> list:
+    clip = db.get_clip(clip_id)
+    if clip is None:
+        raise HTTPException(status_code=404, detail="Clip not found")
+    detections = db.list_detections_for_clip(clip_id)
+    if not detections:
+        return []
+    # Return detections from the first frame that has any detections
+    first_fi = detections[0]["frame_index"]
+    return [d for d in detections if d["frame_index"] == first_fi]
 
 
 @router.get("/activity")

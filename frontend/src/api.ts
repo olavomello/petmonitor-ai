@@ -136,6 +136,19 @@ export interface ActivityResponse {
   note: string;
 }
 
+export interface Detection {
+  id: number;
+  clip_id: number;
+  frame_index: number;
+  timestamp_ms: number;
+  pet_class: number;
+  confidence: number;
+  bbox_x: number;
+  bbox_y: number;
+  bbox_w: number;
+  bbox_h: number;
+}
+
 export interface HeatmapResponse {
   identity: string;
   grid_w: number;
@@ -193,6 +206,7 @@ export const api = {
   blinkAuthVerify: (code: string) =>
     request<{ status: string }>("POST", "/blink/auth/verify", { code }),
   clipThumbnailUrl: (clipId: number) => `${BASE}/clips/${clipId}/thumbnail`,
+  clipDetections: (clipId: number) => get<Detection[]>(`/clips/${clipId}/detections`),
   clipVideoUrl: (clipId: number) => `${BASE}/clips/${clipId}/video`,
   trajectories: (identity: string) => get<TrajectoriesResponse>(`/trajectories/${encodeURIComponent(identity)}`),
   petsCreate: (body: PetCreate) => request<Pet>("POST", "/pets", body),

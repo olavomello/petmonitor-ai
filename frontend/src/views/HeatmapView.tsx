@@ -70,7 +70,7 @@ export default function HeatmapView() {
           </div>
 
           {/* Heatmap with optional room background */}
-          <div style={{ position: "relative", borderRadius: "var(--radius)", overflow: "hidden" }}>
+          <div style={{ position: "relative", borderRadius: "var(--radius)", overflow: "hidden", width: 500, height: 350, maxWidth: "100%" }}>
             {latestClip && (
               <img
                 src={api.clipThumbnailUrl(latestClip.id)}

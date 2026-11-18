@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Pet, type StatusResponse } from "../api";
+import { useEffect, useRef, useState } from "react";
+import { api, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Detection, type Pet, type StatusResponse } from "../api";
 import type { View } from "../nav";
 
 const PET_COLOR: Record<string, string> = {
@@ -90,10 +90,62 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
   );
 }
 
+const DET_COLOR: Record<number, string> = { 0: "#00b4d8", 1: "#a78bfa" };
+const DET_NAME: Record<number, string> = { 0: "Branca", 1: "Marrie" };
+
+function drawBboxes(
+  img: HTMLImageElement,
+  canvas: HTMLCanvasElement,
+  detections: Detection[],
+) {
+  canvas.width = img.clientWidth;
+  canvas.height = img.clientHeight;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (detections.length === 0) return;
+  const sx = img.clientWidth / (img.naturalWidth || img.clientWidth);
+  const sy = img.clientHeight / (img.naturalHeight || img.clientHeight);
+  ctx.font = "bold 11px system-ui, sans-serif";
+  for (const d of detections) {
+    const x = d.bbox_x * sx;
+    const y = d.bbox_y * sy;
+    const w = d.bbox_w * sx;
+    const h = d.bbox_h * sy;
+    const color = DET_COLOR[d.pet_class] ?? "#94a3b8";
+    const label = `${DET_NAME[d.pet_class] ?? "Unknown"} ${Math.round(d.confidence * 100)}%`;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(x, y, w, h);
+    const tw = ctx.measureText(label).width;
+    ctx.fillStyle = color + "cc";
+    ctx.fillRect(x, y - 19, tw + 10, 19);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(label, x + 5, y - 5);
+  }
+}
+
 function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; blinkConnected: boolean; cameraName: string }) {
   const latest = clips[0];
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const thumbUrl = latest ? api.clipThumbnailUrl(latest.id) : null;
+
+  useEffect(() => {
+    setDetections([]);
+    setImgLoaded(false);
+    setThumbFailed(false);
+    if (!latest || latest.detection_count === 0) return;
+    api.clipDetections(latest.id).then(setDetections).catch(() => {});
+  }, [latest?.id]);
+
+  useEffect(() => {
+    if (!imgLoaded || !imgRef.current || !canvasRef.current) return;
+    drawBboxes(imgRef.current, canvasRef.current, detections);
+  }, [imgLoaded, detections]);
 
   return (
     <div style={{
@@ -119,30 +171,43 @@ function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; bli
             color: blinkConnected ? "#86efac" : "#fca5a5",
             fontWeight: 600,
           }}>{blinkConnected ? "Online" : "Offline"}</span>
+          <span style={{
+            fontSize: "0.62rem", padding: "0.12rem 0.45rem",
+            borderRadius: 999, fontWeight: 600,
+            background: "rgba(100,116,139,0.18)", color: "var(--text-muted)",
+          }}>CLIP</span>
         </div>
         {cameraName && <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>{cameraName}</span>}
       </div>
 
-      {/* Feed area — thumbnail of latest clip */}
+      {/* Feed area — thumbnail with bbox overlay */}
       <div style={{
         flex: 1, background: "#080f1a",
         position: "relative",
-        minHeight: 160,
+        minHeight: 180,
         overflow: "hidden",
       }}>
         {thumbUrl && !thumbFailed ? (
-          <img
-            src={thumbUrl}
-            alt="Latest clip"
-            onError={() => setThumbFailed(true)}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 160 }}
-          />
+          <>
+            <img
+              ref={imgRef}
+              src={thumbUrl}
+              alt="Latest clip"
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setThumbFailed(true)}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 180 }}
+            />
+            <canvas
+              ref={canvasRef}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}
+            />
+          </>
         ) : (
           <div style={{
             display: "flex", flexDirection: "column",
             alignItems: "center", justifyContent: "center",
             padding: "1.75rem 1.25rem", gap: "0.6rem",
-            height: "100%", minHeight: 160,
+            height: "100%", minHeight: 180,
           }}>
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" opacity={0.25}>
               <rect x="2" y="6" width="14" height="12" rx="2" stroke="#94a3b8" strokeWidth="1.5" />
@@ -153,15 +218,22 @@ function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; bli
             </span>
           </div>
         )}
-        {/* Overlay badge for detection count */}
-        {latest && latest.detection_count > 0 && (
+        {/* Detection identity badges */}
+        {detections.length > 0 && (
           <div style={{
-            position: "absolute", top: 8, right: 8,
-            background: "rgba(0,180,216,0.85)", color: "#fff",
-            fontSize: "0.62rem", fontWeight: 700,
-            padding: "0.1rem 0.4rem", borderRadius: 999,
+            position: "absolute", bottom: 8, left: 8,
+            display: "flex", gap: "0.3rem", flexWrap: "wrap",
           }}>
-            {latest.detection_count} det.
+            {[...new Set(detections.map((d) => d.pet_class))].map((cls) => (
+              <span key={cls} style={{
+                fontSize: "0.62rem", fontWeight: 700,
+                padding: "0.1rem 0.5rem", borderRadius: 999,
+                background: (DET_COLOR[cls] ?? "#94a3b8") + "cc",
+                color: "#fff",
+              }}>
+                {DET_NAME[cls] ?? "Unknown"}
+              </span>
+            ))}
           </div>
         )}
       </div>
