@@ -20,7 +20,9 @@ export default function TrainingView() {
   const [polling, setPolling] = useState(false);
   const [activeModel, setActiveModel] = useState<ActiveModelResponse | null>(null);
   const [activating, setActivating] = useState<string | null>(null);
+  const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tableRef = useRef<HTMLTableSectionElement | null>(null);
 
   async function load(silent = false) {
     if (!silent) setLoading(true);
@@ -50,6 +52,23 @@ export default function TrainingView() {
   }
 
   useEffect(() => { load(); }, []);
+
+  function handleTableKey(e: React.KeyboardEvent) {
+    if (runs.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIdx((i) => Math.min(i + 1, runs.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIdx((i) => Math.max(i - 1, 0));
+    } else if ((e.key === "ArrowRight" || e.key === "Enter") && selectedIdx >= 0) {
+      const run = runs[selectedIdx];
+      if (run?.has_best_weights && activating === null) {
+        e.preventDefault();
+        activateRun(run.name);
+      }
+    }
+  }
 
   function startPolling() {
     setPolling(true);
@@ -222,7 +241,13 @@ export default function TrainingView() {
         </p>
       ) : (
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}
+            tabIndex={0}
+            onKeyDown={handleTableKey}
+            onFocus={() => { if (selectedIdx < 0 && runs.length > 0) setSelectedIdx(0); }}
+            aria-label="Training runs"
+          >
             <thead>
               <tr style={{ borderBottom: "2px solid var(--border)", textAlign: "left" }}>
                 <th style={{ padding: "0.5rem 0.75rem" }}>Run</th>
@@ -232,9 +257,20 @@ export default function TrainingView() {
                 <th style={{ padding: "0.5rem 0.75rem" }}></th>
               </tr>
             </thead>
-            <tbody>
-              {runs.map((r) => (
-                <tr key={r.name} style={{ borderBottom: "1px solid var(--border)" }}>
+            <tbody ref={tableRef}>
+              {runs.map((r, idx) => {
+                const isSelected = idx === selectedIdx;
+                return (
+                <tr
+                  key={r.name}
+                  onClick={() => setSelectedIdx(idx)}
+                  style={{
+                    borderBottom: "1px solid var(--border)",
+                    background: isSelected ? "color-mix(in srgb, var(--teal) 8%, var(--bg-card))" : "transparent",
+                    outline: isSelected ? "1px solid var(--teal)" : "none",
+                    cursor: "pointer",
+                  }}
+                >
                   <td style={{ padding: "0.5rem 0.75rem", fontFamily: "monospace", fontSize: "0.78rem" }}>{r.name}</td>
                   <td style={{ padding: "0.5rem 0.75rem", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
                     {formatDt(r.started_at)}
@@ -284,9 +320,14 @@ export default function TrainingView() {
                     )}
                   </td>
                 </tr>
-              ))}
+              ); })}
             </tbody>
           </table>
+          {selectedIdx >= 0 && (
+            <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
+              ↑ ↓ navigate rows · → or Enter activate selected run
+            </p>
+          )}
         </div>
       )}
     </div>

@@ -290,19 +290,25 @@ def list_runs() -> list:
     if not runs_dir.exists():
         return []
 
+    def _has_training_artifacts(d: Path) -> bool:
+        return (
+            (d / "metadata.json").exists()
+            or (d / "results.csv").exists()
+            or (d / "weights" / "best.pt").exists()
+            or (d / "yolo" / "weights" / "best.pt").exists()
+        )
+
     def _candidate_dirs(base: Path):
-        """Yield run directories: flat (runs/trainX) and YOLO-nested (runs/*/trainX)."""
+        """Yield training run directories: flat (runs/trainX) and YOLO-nested (runs/*/trainX).
+        Skips YOLO detection/prediction output dirs that contain no training artifacts."""
         for d in sorted(base.iterdir(), reverse=True):
             if not d.is_dir():
                 continue
-            has_meta = (d / "metadata.json").exists()
-            has_csv = (d / "results.csv").exists()
-            has_weights = (d / "weights" / "best.pt").exists()
-            if has_meta or has_csv or has_weights:
+            if _has_training_artifacts(d):
                 yield d
             else:
                 for sub in sorted(d.iterdir(), reverse=True):
-                    if sub.is_dir():
+                    if sub.is_dir() and _has_training_artifacts(sub):
                         yield sub
 
     runs = []
@@ -413,6 +419,7 @@ def get_active_model() -> dict:
 @router.post("/runs/{run_name}/activate")
 def activate_run(run_name: str) -> dict:
     """Copy a training run's best.pt to models/best.pt, making it the active model."""
+    import json as _json
     import shutil
 
     runs_dir = Path("runs")
@@ -431,16 +438,47 @@ def activate_run(run_name: str) -> dict:
     if run_dir is None:
         raise HTTPException(status_code=404, detail=f"Run '{run_name}' not found")
 
-    weights_path = run_dir / "weights" / "best.pt"
-    if not weights_path.exists():
+    # Resolve weights path using the same priority as list_runs:
+    # 1. metadata.json model_path, 2. weights/best.pt, 3. yolo/weights/best.pt
+    weights_path: Path | None = None
+    meta_path = run_dir / "metadata.json"
+    if meta_path.exists():
+        try:
+            meta = _json.loads(meta_path.read_text(encoding="utf-8"))
+            model_path_str = meta.get("model_path")
+            if model_path_str:
+                p = Path(model_path_str)
+                if not p.is_absolute():
+                    p = Path.cwd() / p
+                if p.exists():
+                    weights_path = p
+        except Exception:
+            pass
+
+    if weights_path is None:
+        for candidate_w in [
+            run_dir / "weights" / "best.pt",
+            run_dir / "yolo" / "weights" / "best.pt",
+        ]:
+            if candidate_w.exists():
+                weights_path = candidate_w
+                break
+
+    if weights_path is None:
         raise HTTPException(status_code=404, detail="best.pt not found for this run")
 
-    # Path traversal guard
+    # Path traversal guard — weights must be under runs/
     runs_root = runs_dir.resolve()
+    models_root = models_dir.resolve()
     try:
-        weights_path.resolve().relative_to(runs_root)
+        resolved = weights_path.resolve()
+        resolved.relative_to(runs_root)
     except ValueError:
-        raise HTTPException(status_code=403, detail="Access denied")
+        # Also allow weights already inside models/ (edge case)
+        try:
+            resolved.relative_to(models_root)
+        except ValueError:
+            raise HTTPException(status_code=403, detail="Access denied")
 
     models_dir.mkdir(parents=True, exist_ok=True)
     dest = models_dir / "best.pt"
