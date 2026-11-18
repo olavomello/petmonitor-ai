@@ -9,10 +9,10 @@ const STATE_COLORS: Record<string, string> = {
 };
 
 const STATE_LABELS: Record<string, string> = {
-  moving: "Moving",
-  stationary: "Stationary",
-  not_visible: "Not visible",
-  unknown: "Unknown",
+  moving: "Em movimento",
+  stationary: "Parado",
+  not_visible: "Fora do campo",
+  unknown: "Indeterminado",
 };
 
 function StateIcon({ state, size = 18 }: { state: string; size?: number }) {

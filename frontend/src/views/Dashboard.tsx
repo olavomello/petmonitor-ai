@@ -39,7 +39,7 @@ function PawIcon({ size = 14 }: { size?: number }) {
 
 const ACTIVITIES = [
   {
-    key: "stationary", label: "Repouso",
+    key: "stationary", label: "Parado",
     icon: (
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
         <rect x="2" y="9" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
@@ -50,7 +50,7 @@ const ACTIVITIES = [
     ),
   },
   {
-    key: "moving", label: "Movimento",
+    key: "moving", label: "Em movimento",
     icon: (
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
         <circle cx="9" cy="4" r="1.8" fill="currentColor" opacity="0.85" />
@@ -60,25 +60,22 @@ const ACTIVITIES = [
     ),
   },
   {
-    key: "unknown", label: "Brincando",
+    key: "unknown", label: "Indeterminado",
     icon: (
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-        <rect x="2" y="6" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.3" />
-        <circle cx="6" cy="10" r="1.2" fill="currentColor" opacity="0.75" />
-        <circle cx="12" cy="10" r="1.2" fill="currentColor" opacity="0.75" />
-        <path d="M8 8.5h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M7 3l1.5 3M11 3l-1.5 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M9 6.5c0-1 .8-1.5 1.5-1.5a1.5 1.5 0 0 1 0 3c-.8 0-1.5.5-1.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="9" cy="13" r="0.8" fill="currentColor" />
       </svg>
     ),
   },
   {
-    key: "not_visible", label: "Em pé",
+    key: "not_visible", label: "Fora do campo",
     icon: (
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-        <ellipse cx="9" cy="7" rx="3" ry="2" stroke="currentColor" strokeWidth="1.3" />
-        <path d="M4 15c0-3 2-5 5-5s5 2 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-        <circle cx="7" cy="6.5" r="0.7" fill="currentColor" />
-        <circle cx="11" cy="6.5" r="0.7" fill="currentColor" />
+        <path d="M2 2l14 14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M5.5 4.3C6.6 3.5 7.8 3 9 3c3.3 0 6 3 6 6a9 9 0 0 1-.6 2.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <path d="M3 7.5A9 9 0 0 0 3 9c0 3 2.7 6 6 6 1.2 0 2.4-.4 3.5-1.1" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
       </svg>
     ),
   },
