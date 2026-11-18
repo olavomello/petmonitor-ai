@@ -15,15 +15,16 @@ storage:
 detection:
   # Path to YOLO model weights (relative to project root or absolute)
   # Leave blank to use Ultralytics default (downloads yolov8n.pt on first run)
-  model_path: ""
+  model_path: "models/best.pt"
   # Confidence threshold for detections (0.0 – 1.0)
   confidence_threshold: 0.40
   # Frame sampling: process every N-th frame (1 = every frame, 5 = every 5th)
   frame_sample_rate: 5
   # YOLO device: "cpu" only on this hardware (Intel Iris Plus, no NVIDIA GPU)
   device: "cpu"
-  # YOLO class IDs to filter (COCO: 15=cat, 16=dog; null = all classes)
-  filter_classes: [16]  # dog class in COCO
+  # YOLO class IDs to filter (null = all classes)
+  # best.pt is fine-tuned with 2 classes (0=Branca, 1=Marrie); keep all of them.
+  filter_classes: null
 
 blink:
   # Camera name to use (null = use first discovered camera)

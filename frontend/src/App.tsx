@@ -7,6 +7,7 @@ import AdminView from "./views/admin/AdminView";
 import EventsView from "./views/EventsView";
 import CameraView from "./views/CameraView";
 import SettingsView from "./views/SettingsView";
+import TrajectoriesView from "./views/TrajectoriesView";
 import { NavIcons, NAV_BOTTOM, type View } from "./nav";
 
 type Theme = "dark" | "light";
@@ -31,7 +32,7 @@ function MoonIcon() {
 function MobileTopBar({ theme, onToggle }: { theme: Theme; onToggle: () => void }) {
   return (
     <header className="mobile-topbar">
-      <img src="/logo-white.png" alt="PetMonitor AI" style={{ height: 26, objectFit: "contain", flex: 1 }} />
+      <img src="/logo-white.png" alt="PetMonitor AI" style={{ height: 45, objectFit: "contain", flex: 1 }} />
       <button className="theme-toggle" onClick={onToggle} aria-label="Toggle theme">
         {theme === "dark" ? <SunIcon /> : <MoonIcon />}
       </button>
@@ -113,6 +114,7 @@ export default function App() {
           {view === "dashboard" && <Dashboard onNavigate={setView} />}
           {view === "activity" && <Activity />}
           {view === "events" && <EventsView />}
+          {view === "trajectories" && <TrajectoriesView />}
           {view === "heatmap" && <HeatmapView />}
           {view === "camera" && <CameraView onNavigate={(v) => setView(v)} />}
           {view === "admin" && <AdminView />}

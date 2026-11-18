@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
 import { NavIcons, NAV_SIDEBAR, type View } from "../nav";
 
 interface Props {
@@ -6,6 +8,14 @@ interface Props {
 }
 
 export default function NavBar({ active, onNavigate }: Props) {
+  const [cameraName, setCameraName] = useState<string>("");
+
+  useEffect(() => {
+    api.blinkCameras().then((r) => {
+      if (r.cameras.length > 0) setCameraName(r.cameras[0]);
+    }).catch(() => {});
+  }, []);
+
   return (
     <nav className="sidebar-nav">
       <div style={{
@@ -21,7 +31,7 @@ export default function NavBar({ active, onNavigate }: Props) {
         <img
           src="/logo-white.png"
           alt="PetMonitor AI"
-          style={{ height: 28, maxWidth: "90%", objectFit: "contain" }}
+          style={{ height: 45, maxWidth: "90%", objectFit: "contain" }}
         />
       </div>
 
@@ -101,7 +111,7 @@ export default function NavBar({ active, onNavigate }: Props) {
         </div>
         <div>
           <div style={{ fontSize: "0.76rem", fontWeight: 600, color: "var(--text-secondary)" }}>
-            Blink – Living Room
+            {cameraName ? `Blink – ${cameraName}` : "Blink"}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.1rem" }}>
             <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--border)", display: "inline-block" }} />

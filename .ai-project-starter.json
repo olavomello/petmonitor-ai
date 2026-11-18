@@ -2,9 +2,9 @@
   "$schema": "ai-project-starter/manifest@1",
   "starter": "https://github.com/olavomello/ai-project-starter.git",
   "starterVersion": "0.1.0",
-  "starterRef": "1085bc0358d7a0146383b524fe92426a5a8138c2",
+  "starterRef": "26a0a0d263bd6202518049d1d016968536a14c00",
   "createdAt": "2026-11-16T20:34:06.453Z",
-  "updatedAt": "2026-11-16T23:30:11.609Z",
+  "updatedAt": "2026-11-17T16:31:42.570Z",
   "files": {
     ".agents/gate.conf.example": "sha256:f2540335e399bc09a66230588f055f6ff0d67af30c3d98c4d206b3b56b01b6c2",
     ".agents/log/live.jsonl": "sha256:f94f2692c90c951bcec24d33d14d0957ac5bc74342be3e1a2c4ab3c626a79f26",
@@ -68,7 +68,11 @@
     "scripts/prices.mjs": "sha256:7507bb509424d6786c1e53b55caaf8c2b537b3acc394eccc5474cb5cbf043c6c",
     "scripts/skills.mjs": "sha256:02a1f7780333bd343323d35409513dec46069c6c148d47c3eedd122118e3ee6a",
     "scripts/tasks.mjs": "sha256:c88299bdef2d2ad9771b4b66c660a9f3012b3be409465bc05e5a560288d6f981",
-    "VERSION": "sha256:33035df4486ead0833b23c476406b1bac33a096f8eef5daaf5c5ede0e6faf0b9"
+    "VERSION": "sha256:33035df4486ead0833b23c476406b1bac33a096f8eef5daaf5c5ede0e6faf0b9",
+    "docs/optional-skills/untangle-codebase/LICENSE": "sha256:89329ebe574719e74789c4895f9a0154d862007faa568891a75587ee28b0edd4",
+    "docs/optional-skills/untangle-codebase/SKILL.md": "sha256:bc85d899e076e3d745a290d42c3371196f3e9c456d293ca528ef74be79a8d89c",
+    "docs/optional-skills/untangle-codebase/SOURCE.md": "sha256:e6240f23a9bdf39242e719fcd055151827b572e7d8fceacba2f673029539962a",
+    "scripts/optional-skills.mjs": "sha256:bad126e3379949c2dc98d61a31bcc224c0e9697f4fcf5f876911d43ad1fca5d5"
   },
   "acknowledged": {
     "AGENTS.md": "sha256:f4b741baea3c96cd534b1d025a79acec685df1a448ff2b7f3544f3b84207697e"

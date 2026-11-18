@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type BlinkStatus, type Clip, type Pet, type StatusResponse } from "../api";
+import { api, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Pet, type StatusResponse } from "../api";
 import type { View } from "../nav";
 
 const PET_COLOR: Record<string, string> = {
@@ -90,7 +90,7 @@ function PetCard({ pet, maxTracks }: { pet: Pet; maxTracks: number }) {
   );
 }
 
-function CameraPanel({ clips, blinkConnected }: { clips: Clip[]; blinkConnected: boolean }) {
+function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; blinkConnected: boolean; cameraName: string }) {
   const latest = clips[0];
   const [thumbFailed, setThumbFailed] = useState(false);
   const thumbUrl = latest ? api.clipThumbnailUrl(latest.id) : null;
@@ -120,7 +120,7 @@ function CameraPanel({ clips, blinkConnected }: { clips: Clip[]; blinkConnected:
             fontWeight: 600,
           }}>{blinkConnected ? "Online" : "Offline"}</span>
         </div>
-        <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>Living Room</span>
+        {cameraName && <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>{cameraName}</span>}
       </div>
 
       {/* Feed area — thumbnail of latest clip */}
@@ -459,13 +459,23 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
   const [pets, setPets] = useState<Pet[]>([]);
   const [clips, setClips] = useState<Clip[]>([]);
   const [blinkStatus, setBlinkStatus] = useState<BlinkStatus | null>(null);
+  const [cameras, setCameras] = useState<BlinkCamerasResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([api.status(), api.pets(), api.clips(10), api.blinkStatus().catch(() => null)])
-      .then(([s, p, c, bs]) => { setStatus(s); setPets(p); setClips(c); setBlinkStatus(bs); })
+    Promise.all([
+      api.status(),
+      api.pets(),
+      api.clips(10),
+      api.blinkStatus().catch(() => null),
+      api.blinkCameras().catch(() => null),
+    ])
+      .then(([s, p, c, bs, cams]) => {
+        setStatus(s); setPets(p); setClips(c);
+        setBlinkStatus(bs); setCameras(cams);
+      })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
   }, []);
@@ -541,7 +551,11 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
           )
         }
         <div className="db-camera">
-          <CameraPanel clips={clips} blinkConnected={status?.blink_connected ?? false} />
+          <CameraPanel
+            clips={clips}
+            blinkConnected={status?.blink_connected ?? false}
+            cameraName={cameras?.cameras[0] ?? ""}
+          />
         </div>
       </div>
 

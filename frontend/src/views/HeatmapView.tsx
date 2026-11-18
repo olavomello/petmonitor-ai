@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { api, type HeatmapResponse, type Pet } from "../api";
+import { api, type Clip, type HeatmapResponse, type Pet } from "../api";
 import HeatmapGrid from "../components/HeatmapGrid";
 
 export default function HeatmapView() {
   const [pets, setPets] = useState<Pet[]>([]);
   const [selected, setSelected] = useState<string>("");
   const [data, setData] = useState<HeatmapResponse | null>(null);
+  const [latestClip, setLatestClip] = useState<Clip | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -14,6 +15,7 @@ export default function HeatmapView() {
       setPets(p);
       if (p.length > 0 && !selected) setSelected(p[0].name);
     }).catch(() => {});
+    api.clips(1, 0).then((clips) => setLatestClip(clips[0] ?? null)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -67,7 +69,25 @@ export default function HeatmapView() {
             </div>
           </div>
 
-          <HeatmapGrid grid={data.grid} width={500} height={350} />
+          {/* Heatmap with optional room background */}
+          <div style={{ position: "relative", borderRadius: "var(--radius)", overflow: "hidden" }}>
+            {latestClip && (
+              <img
+                src={api.clipThumbnailUrl(latestClip.id)}
+                alt="Room background"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                style={{
+                  position: "absolute", inset: 0,
+                  width: "100%", height: "100%",
+                  objectFit: "cover", display: "block",
+                  opacity: 0.35,
+                }}
+              />
+            )}
+            <div style={{ position: "relative" }}>
+              <HeatmapGrid grid={data.grid} width={500} height={350} />
+            </div>
+          </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.25rem" }}>
             <div style={{ height: 10, width: 120, background: "linear-gradient(to right, rgba(0,180,216,0.1), rgba(255,100,0,0.95))", borderRadius: 4 }} />

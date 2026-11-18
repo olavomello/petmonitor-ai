@@ -283,18 +283,30 @@ def trigger_extract() -> dict:
 
 @router.get("/runs")
 def list_runs() -> list:
+    import csv as _csv
     import json as _json
 
     runs_dir = Path("runs")
     if not runs_dir.exists():
         return []
+
+    def _candidate_dirs(base: Path):
+        """Yield run directories: flat (runs/trainX) and YOLO-nested (runs/*/trainX)."""
+        for d in sorted(base.iterdir(), reverse=True):
+            if not d.is_dir():
+                continue
+            has_meta = (d / "metadata.json").exists()
+            has_csv = (d / "results.csv").exists()
+            has_weights = (d / "weights" / "best.pt").exists()
+            if has_meta or has_csv or has_weights:
+                yield d
+            else:
+                for sub in sorted(d.iterdir(), reverse=True):
+                    if sub.is_dir():
+                        yield sub
+
     runs = []
-    for run_dir in sorted(runs_dir.iterdir(), reverse=True):
-        if not run_dir.is_dir():
-            continue
-        meta_path = run_dir / "metadata.json"
-        if not meta_path.exists():
-            continue
+    for run_dir in _candidate_dirs(runs_dir):
         run: dict = {
             "name": run_dir.name,
             "has_best_weights": False,
@@ -303,27 +315,56 @@ def list_runs() -> list:
             "finished_at": None,
             "error": None,
         }
-        weights_candidates = [
-            run_dir / "weights" / "best.pt",
-            run_dir / "yolo" / "weights" / "best.pt",
-        ]
-        run["has_best_weights"] = any(w.exists() for w in weights_candidates)
         try:
-            meta = _json.loads(meta_path.read_text(encoding="utf-8"))
-            metrics = meta.get("metrics") or {}
-            run["has_metrics"] = bool(metrics)
-            if metrics:
-                run["last_epoch"] = {
-                    k: f"{v:.4f}" if isinstance(v, float) else str(v)
-                    for k, v in metrics.items()
-                }
-            run["started_at"] = meta.get("started_at")
-            run["finished_at"] = meta.get("finished_at")
-            run["error"] = meta.get("error")
+            meta_path = run_dir / "metadata.json"
+            if meta_path.exists():
+                meta = _json.loads(meta_path.read_text(encoding="utf-8"))
+                metrics = meta.get("metrics") or {}
+                run["has_metrics"] = bool(metrics)
+                if metrics:
+                    run["last_epoch"] = {
+                        k: f"{v:.4f}" if isinstance(v, float) else str(v)
+                        for k, v in metrics.items()
+                    }
+                run["started_at"] = meta.get("started_at")
+                run["finished_at"] = meta.get("finished_at")
+                run["error"] = meta.get("error")
+                model_path_str = meta.get("model_path")
+                weights_candidates: list[Path] = []
+                if model_path_str:
+                    p = Path(model_path_str)
+                    weights_candidates.append(p if p.is_absolute() else Path.cwd() / p)
+            else:
+                weights_candidates = []
+                csv_path = run_dir / "results.csv"
+                if csv_path.exists():
+                    with csv_path.open(encoding="utf-8") as f:
+                        rows = list(_csv.DictReader(f))
+                    if rows:
+                        last = rows[-1]
+                        run["has_metrics"] = True
+                        run["last_epoch"] = {
+                            k: str(float(v)) if _is_float(v) else str(v)
+                            for k, v in last.items()
+                        }
+
+            weights_candidates += [
+                run_dir / "weights" / "best.pt",
+                run_dir / "yolo" / "weights" / "best.pt",
+            ]
+            run["has_best_weights"] = any(w.exists() for w in weights_candidates)
         except Exception:
             pass
         runs.append(run)
     return runs
+
+
+def _is_float(v: str) -> bool:
+    try:
+        float(v)
+        return True
+    except (ValueError, TypeError):
+        return False
 
 
 @router.post("/detect")

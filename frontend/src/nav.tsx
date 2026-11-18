@@ -1,4 +1,4 @@
-export type View = "dashboard" | "activity" | "events" | "heatmap" | "camera" | "admin" | "settings";
+export type View = "dashboard" | "activity" | "events" | "trajectories" | "heatmap" | "camera" | "admin" | "settings";
 
 export type NavItem = {
   id: View | null;
@@ -70,7 +70,7 @@ export const NAV_SIDEBAR: NavItem[] = [
   { id: "dashboard", label: "Dashboard", iconKey: "dashboard", available: true },
   { id: "activity", label: "Activities", iconKey: "activity", available: true },
   { id: "events", label: "Events", iconKey: "events", available: true },
-  { id: null, label: "Trajectories", iconKey: "trajectories", available: false },
+  { id: "trajectories", label: "Trajectories", iconKey: "trajectories", available: true },
   { id: "heatmap", label: "Heatmap", iconKey: "heatmap", available: true },
   { id: "camera", label: "Camera", iconKey: "camera", available: true },
   { id: "admin", label: "AI Models", iconKey: "models", available: true },

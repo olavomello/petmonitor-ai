@@ -59,6 +59,29 @@ export default function TrainingView() {
 
   return (
     <div>
+      {/* Step-by-step guide */}
+      <div style={{
+        background: "var(--bg-card)", border: "1px solid var(--border)",
+        borderRadius: "var(--radius)", padding: "1rem 1.25rem",
+        marginBottom: "1.5rem",
+      }}>
+        <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.65rem" }}>How to train a model</div>
+        <ol style={{ margin: 0, paddingLeft: "1.25rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+          {[
+            "Open the Dataset tab and scan frames to register extracted images.",
+            "Review and label images in the Dataset tab (keep/discard/label with bounding boxes).",
+            "In the Dataset tab, run Split to divide labeled images into train/val sets.",
+            "Open the Clips & Sync tab and sync new clips from your Blink camera if needed.",
+            "Return here and click Start training — training runs in the background.",
+            "After training finishes, the best weights are saved and used for future detection runs.",
+          ].map((step, i) => (
+            <li key={i} style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+              <span style={{ color: "var(--teal)", fontWeight: 600 }}>Step {i + 1}:</span> {step}
+            </li>
+          ))}
+        </ol>
+      </div>
+
       <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
         <button
           onClick={triggerTrain}

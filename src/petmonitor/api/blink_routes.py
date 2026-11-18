@@ -12,10 +12,20 @@ from pydantic import BaseModel
 router = APIRouter(prefix="/blink")
 
 _CREDS_FILE = Path("data/.blink_creds.json")
+_CAMERAS_FILE = Path("data/.blink_cameras.json")
 
 # In-memory 2FA state for a single ongoing auth session (local server, single user).
 _pending: dict = {}  # keys: "blink", "created_at"
 _PENDING_TTL = 300  # 5 minutes to submit 2FA code
+
+
+def _save_camera_names(blink: object) -> None:  # pragma: no cover
+    try:
+        names = list(getattr(blink, "cameras", {}).keys())
+        _CAMERAS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _CAMERAS_FILE.write_text(json.dumps({"cameras": names}), encoding="utf-8")
+    except Exception:
+        pass
 
 
 class AuthStartBody(BaseModel):
@@ -25,6 +35,18 @@ class AuthStartBody(BaseModel):
 
 class AuthVerifyBody(BaseModel):
     code: str
+
+
+@router.get("/cameras")
+def get_blink_cameras() -> dict:
+    """Return camera names saved from the last successful Blink auth."""
+    if not _CAMERAS_FILE.exists():
+        return {"cameras": []}
+    try:
+        data = json.loads(_CAMERAS_FILE.read_text(encoding="utf-8"))
+        return {"cameras": data.get("cameras", [])}
+    except Exception:
+        return {"cameras": []}
 
 
 @router.get("/status")
@@ -70,6 +92,7 @@ async def start_blink_auth(body: AuthStartBody) -> dict:  # pragma: no cover
         _CREDS_FILE.parent.mkdir(parents=True, exist_ok=True)
         await blink.save(str(_CREDS_FILE))
         _pending.clear()
+        _save_camera_names(blink)
         return {"status": "authenticated"}
     except Exception as exc:
         exc_name = type(exc).__name__
@@ -102,6 +125,7 @@ async def verify_blink_auth(body: AuthVerifyBody) -> dict:  # pragma: no cover
         _CREDS_FILE.parent.mkdir(parents=True, exist_ok=True)
         await blink.save(str(_CREDS_FILE))
         _pending.clear()
+        _save_camera_names(blink)
         return {"status": "authenticated"}
     except HTTPException:
         raise

@@ -5,7 +5,7 @@ from __future__ import annotations
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from starlette.responses import FileResponse
 
 from petmonitor.activities.analyser import compute_heatmap, get_activity_summary
@@ -49,9 +49,8 @@ def get_clip(clip_id: int, db: Database = Depends(get_db)) -> dict:
 
 
 @router.get("/pets")
-def get_pets(request: Request, db: Database = Depends(get_db)) -> list:
-    cfg = getattr(request.app.state, "config", {})
-    pets = cfg.get("pets", [])
+def get_pets(db: Database = Depends(get_db)) -> list:
+    pets = db.list_pets(active_only=True)
     identity_stats = {row["identity"]: row for row in db.get_identity_stats()}
     result = []
     for pet in pets:
@@ -60,7 +59,7 @@ def get_pets(request: Request, db: Database = Depends(get_db)) -> list:
             {
                 "id": pet["id"],
                 "name": pet["name"],
-                "class_id": pet["class_id"],
+                "class_id": pet.get("class_id", 0),
                 "track_count": stat["track_count"],
                 "clip_count": stat["clip_count"],
             }
@@ -152,4 +151,17 @@ def get_heatmap(
         "point_count": len(points),
         "grid": grid,
         "note": "Grid values are sample counts from processed footage, not minutes.",
+    }
+
+
+@router.get("/trajectories/{identity}")
+def get_trajectories(identity: str, db: Database = Depends(get_db)) -> dict:
+    if not identity or identity.strip() == "":
+        raise HTTPException(status_code=400, detail="identity must not be empty")
+    points = db.list_trajectory_points(identity=identity)
+    return {
+        "identity": identity,
+        "point_count": len(points),
+        "points": points,
+        "note": "Ground-plane (bottom-centre of bounding box) coordinates from processed footage.",
     }

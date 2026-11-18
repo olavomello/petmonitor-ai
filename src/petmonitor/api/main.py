@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from petmonitor.api.admin_routes import router as admin_router
 from petmonitor.api.blink_routes import router as blink_router
 from petmonitor.api.deps import close_db, init_db
+from petmonitor.api.pets_routes import router as pets_router
 from petmonitor.api.routes import router
 
 
@@ -51,13 +52,14 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
-    allow_methods=["GET", "POST", "PATCH"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
 
 app.include_router(router, prefix="/api/v1")
 app.include_router(admin_router, prefix="/api/v1")
 app.include_router(blink_router, prefix="/api/v1")
+app.include_router(pets_router, prefix="/api/v1")
 
 
 def main() -> None:  # pragma: no cover

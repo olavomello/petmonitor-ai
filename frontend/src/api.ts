@@ -78,9 +78,46 @@ export interface Clip {
 export interface Pet {
   id: number;
   name: string;
+  species?: string;
+  color?: string | null;
+  breed?: string | null;
+  notes?: string | null;
   class_id: number;
   track_count: number;
   clip_count: number;
+}
+
+export interface PetCreate {
+  name: string;
+  species: string;
+  color?: string;
+  breed?: string;
+  notes?: string;
+}
+
+export interface PetReference {
+  id: number;
+  pet_id: number;
+  image_path: string;
+  source: "upload" | "auto_crop";
+  created_at: string;
+}
+
+export interface TrajectoryPoint {
+  frame_index: number;
+  x_px: number;
+  y_px: number;
+}
+
+export interface TrajectoriesResponse {
+  identity: string;
+  point_count: number;
+  points: TrajectoryPoint[];
+  note: string;
+}
+
+export interface BlinkCamerasResponse {
+  cameras: string[];
 }
 
 export interface ActivityEvent {
@@ -150,12 +187,19 @@ export const api = {
   heatmap: (identity: string, grid_w = 50, grid_h = 50) =>
     get<HeatmapResponse>(`/heatmap/${encodeURIComponent(identity)}`, { grid_w, grid_h }),
   blinkStatus: () => get<BlinkStatus>("/blink/status"),
+  blinkCameras: () => get<BlinkCamerasResponse>("/blink/cameras"),
   blinkAuthStart: (email: string, password: string) =>
     request<{ status: string }>("POST", "/blink/auth/start", { email, password }),
   blinkAuthVerify: (code: string) =>
     request<{ status: string }>("POST", "/blink/auth/verify", { code }),
   clipThumbnailUrl: (clipId: number) => `${BASE}/clips/${clipId}/thumbnail`,
   clipVideoUrl: (clipId: number) => `${BASE}/clips/${clipId}/video`,
+  trajectories: (identity: string) => get<TrajectoriesResponse>(`/trajectories/${encodeURIComponent(identity)}`),
+  petsCreate: (body: PetCreate) => request<Pet>("POST", "/pets", body),
+  petsUpdate: (id: number, body: Partial<PetCreate>) => apiFetch<Pet>("PUT", `/pets/${id}`, { body }),
+  petsDelete: (id: number) => apiFetch<void>("DELETE", `/pets/${id}`),
+  petReferences: (petId: number) => get<PetReference[]>(`/pets/${petId}/references`),
+  deleteReference: (refId: number) => apiFetch<void>("DELETE", `/pets/references/${refId}`),
 };
 
 export const adminApi = {

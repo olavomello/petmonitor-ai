@@ -475,6 +475,28 @@ export default function DatasetView() {
         />
       )}
       <div>
+        {/* Step-by-step guide */}
+        <div style={{
+          background: "var(--bg-card)", border: "1px solid var(--border)",
+          borderRadius: "var(--radius)", padding: "1rem 1.25rem",
+          marginBottom: "1.5rem",
+        }}>
+          <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.65rem" }}>How to build a labeled dataset</div>
+          <ol style={{ margin: 0, paddingLeft: "1.25rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+            {[
+              "Click Scan frames to register raw images extracted from your clips.",
+              "Browse images below — click Keep on useful frames or Discard on blurry/empty ones.",
+              "Open a frame and draw bounding boxes around each pet to label it.",
+              "Once enough frames are labeled, click Split dataset to create train/val splits.",
+              "Head to the Training tab and click Start training to fine-tune the model.",
+            ].map((step, i) => (
+              <li key={i} style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                <span style={{ color: "var(--teal)", fontWeight: 600 }}>Step {i + 1}:</span> {step}
+              </li>
+            ))}
+          </ol>
+        </div>
+
         {/* Toolbar */}
         <div style={{ display: "flex", gap: "0.6rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
           <button

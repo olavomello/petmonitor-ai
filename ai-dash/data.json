@@ -1,7 +1,61 @@
 {
-  "generated_at": "2026-11-17T15:02:31.172Z",
-  "log_records": 33,
+  "generated_at": "2026-11-18T02:07:06.967Z",
+  "log_records": 39,
   "recent": [
+    {
+      "ts": "2026-11-18T02:07:06.780Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "pass",
+      "tokens_in": 387849,
+      "tokens_out": 2219
+    },
+    {
+      "ts": "2026-11-18T02:06:16.987Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "fail",
+      "tokens_in": 1665487,
+      "tokens_out": 7830
+    },
+    {
+      "ts": "2026-11-18T02:04:16.937Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-sonnet-4-6",
+      "gate": "fail",
+      "tokens_in": 12715496,
+      "tokens_out": 47029
+    },
+    {
+      "ts": "2026-11-17T19:11:55.352Z",
+      "task_type": "other",
+      "agent": "main",
+      "model": "claude-opus-4-8",
+      "gate": "fail",
+      "tokens_in": 593017,
+      "tokens_out": 3014
+    },
+    {
+      "ts": "2026-11-17T19:10:54.352Z",
+      "task_type": "other",
+      "agent": "dev-storage-keeper",
+      "model": "claude-opus-4-8",
+      "gate": "fail",
+      "tokens_in": 419705,
+      "tokens_out": 2342
+    },
+    {
+      "ts": "2026-11-17T19:09:57.015Z",
+      "task_type": "other",
+      "agent": "mlo-model-trainer",
+      "model": "claude-opus-4-8",
+      "gate": "fail",
+      "tokens_in": 42100868,
+      "tokens_out": 229445
+    },
     {
       "ts": "2026-11-17T15:02:31.044Z",
       "task_type": "other",
@@ -37,80 +91,26 @@
       "gate": "pass",
       "tokens_in": 5656034,
       "tokens_out": 31598
-    },
-    {
-      "ts": "2026-11-17T05:25:10.310Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 1173442,
-      "tokens_out": 3487
-    },
-    {
-      "ts": "2026-11-17T05:21:54.193Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 6354029,
-      "tokens_out": 62537
-    },
-    {
-      "ts": "2026-11-17T04:59:55.799Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 4160321,
-      "tokens_out": 12846
-    },
-    {
-      "ts": "2026-11-17T04:53:15.033Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 3889576,
-      "tokens_out": 14472
-    },
-    {
-      "ts": "2026-11-17T04:48:08.392Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 10062178,
-      "tokens_out": 52268
-    },
-    {
-      "ts": "2026-11-17T04:04:50.323Z",
-      "task_type": "other",
-      "agent": "main",
-      "model": "claude-sonnet-4-6",
-      "gate": "pass",
-      "tokens_in": 25548593,
-      "tokens_out": 89548
     }
   ],
   "totals": {
-    "executions": 33,
-    "tokens_in": 116706307,
-    "tokens_out": 541936,
-    "cache_read": 114750942,
-    "cache_write": 1954349,
-    "tool_calls": 1068,
-    "duration_s": 12235
+    "executions": 39,
+    "tokens_in": 174588729,
+    "tokens_out": 833815,
+    "cache_read": 171068005,
+    "cache_write": 3519100,
+    "tool_calls": 1555,
+    "duration_s": 19640
   },
   "rates": {
-    "cache_read_ratio": 0.983,
-    "gate_pass": 0.939,
-    "gate_first_pass": 0.879
+    "cache_read_ratio": 0.98,
+    "gate_pass": 0.821,
+    "gate_first_pass": 0.744
   },
   "cost": {
     "usd": 0,
     "priced_executions": 0,
-    "unpriced": 33
+    "unpriced": 39
   },
   "pr_split": {
     "mechanical": 0,
@@ -129,45 +129,69 @@
     },
     {
       "day": "2026-11-17",
-      "executions": 18,
-      "tokens_in": 89371789,
-      "tokens_out": 393774,
-      "cache_read": 87867349,
-      "cache_write": 1503670,
-      "tool_calls": 834,
-      "duration_s": 9532
+      "executions": 21,
+      "tokens_in": 132485379,
+      "tokens_out": 628575,
+      "cache_read": 129887049,
+      "cache_write": 2597076,
+      "tool_calls": 1196,
+      "duration_s": 13745
+    },
+    {
+      "day": "2026-11-18",
+      "executions": 3,
+      "tokens_in": 14768832,
+      "tokens_out": 57078,
+      "cache_read": 14297363,
+      "cache_write": 471345,
+      "tool_calls": 125,
+      "duration_s": 3192
     }
   ],
   "by_task": [
     {
       "task_type": "other",
-      "executions": 33,
-      "tokens_in": 116706307,
-      "tokens_out": 541936,
-      "cache_read": 114750942,
-      "cache_write": 1954349,
-      "tool_calls": 1068,
-      "duration_s": 12235,
-      "gate_pass": 31,
+      "executions": 39,
+      "tokens_in": 174588729,
+      "tokens_out": 833815,
+      "cache_read": 171068005,
+      "cache_write": 3519100,
+      "tool_calls": 1555,
+      "duration_s": 19640,
+      "gate_pass": 32,
       "gate_first": 29,
-      "gate_rated": 33,
-      "gate_first_pass": 0.879
+      "gate_rated": 39,
+      "gate_first_pass": 0.744
     }
   ],
   "by_agent": [
     {
       "agent": "main",
-      "executions": 32,
-      "tokens_in": 115622941,
-      "tokens_out": 533196,
-      "cache_read": 113776071,
-      "cache_write": 1845868,
-      "tool_calls": 1056,
-      "duration_s": 12235,
-      "gate_pass": 30,
+      "executions": 36,
+      "tokens_in": 130984790,
+      "tokens_out": 593288,
+      "cache_read": 128660106,
+      "cache_write": 2323550,
+      "tool_calls": 1185,
+      "duration_s": 15427,
+      "gate_pass": 31,
       "gate_first": 28,
-      "gate_rated": 32,
-      "gate_first_pass": 0.875
+      "gate_rated": 36,
+      "gate_first_pass": 0.778
+    },
+    {
+      "agent": "mlo-model-trainer",
+      "executions": 1,
+      "tokens_in": 42100868,
+      "tokens_out": 229445,
+      "cache_read": 41017686,
+      "cache_write": 1082712,
+      "tool_calls": 354,
+      "duration_s": 4213,
+      "gate_pass": 0,
+      "gate_first": 0,
+      "gate_rated": 1,
+      "gate_first_pass": 0
     },
     {
       "agent": "sys-init-starter",
@@ -182,22 +206,50 @@
       "gate_first": 1,
       "gate_rated": 1,
       "gate_first_pass": 1
+    },
+    {
+      "agent": "dev-storage-keeper",
+      "executions": 1,
+      "tokens_in": 419705,
+      "tokens_out": 2342,
+      "cache_read": 415342,
+      "cache_write": 4357,
+      "tool_calls": 4,
+      "duration_s": 0,
+      "gate_pass": 0,
+      "gate_first": 0,
+      "gate_rated": 1,
+      "gate_first_pass": 0
     }
   ],
   "by_model": [
     {
       "model": "claude-sonnet-4-6",
-      "executions": 32,
-      "tokens_in": 116706307,
-      "tokens_out": 541936,
-      "cache_read": 114750942,
-      "cache_write": 1954349,
-      "tool_calls": 1068,
-      "duration_s": 12235,
-      "gate_pass": 30,
+      "executions": 35,
+      "tokens_in": 131475139,
+      "tokens_out": 599014,
+      "cache_read": 129048305,
+      "cache_write": 2425694,
+      "tool_calls": 1193,
+      "duration_s": 15427,
+      "gate_pass": 31,
       "gate_first": 28,
-      "gate_rated": 32,
-      "gate_first_pass": 0.875
+      "gate_rated": 35,
+      "gate_first_pass": 0.8
+    },
+    {
+      "model": "claude-opus-4-8",
+      "executions": 3,
+      "tokens_in": 43113590,
+      "tokens_out": 234801,
+      "cache_read": 42019700,
+      "cache_write": 1093406,
+      "tool_calls": 362,
+      "duration_s": 4213,
+      "gate_pass": 0,
+      "gate_first": 0,
+      "gate_rated": 3,
+      "gate_first_pass": 0
     },
     {
       "model": "unknown",

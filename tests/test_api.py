@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import types
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,14 +14,6 @@ from petmonitor.storage.database import Database
 from petmonitor.vision.detector import Detection
 
 
-_PETS_CFG = {
-    "pets": [
-        {"id": 1, "name": "Branca", "class_id": 0},
-        {"id": 2, "name": "Marrie", "class_id": 1},
-    ]
-}
-
-
 @pytest.fixture()
 def db(tmp_path: Path) -> Database:
     d = Database(tmp_path / "api_test.db")
@@ -30,13 +21,6 @@ def db(tmp_path: Path) -> Database:
     d.migrate()
     yield d
     d.close()
-
-
-def _mock_request(config: dict = _PETS_CFG):
-    """Minimal Request stand-in that exposes app.state.config."""
-    state = types.SimpleNamespace(config=config)
-    app = types.SimpleNamespace(state=state)
-    return types.SimpleNamespace(app=app)
 
 
 def _clip(sha: str = "abc") -> ClipRecord:
@@ -146,15 +130,25 @@ def test_get_clip_includes_tracks(db: Database) -> None:
 # /pets
 # ------------------------------------------------------------------
 
-def test_get_pets_returns_configured_pets(db: Database) -> None:
-    result = get_pets(request=_mock_request(), db=db)
+@pytest.fixture()
+def empty_db(tmp_path: Path) -> Database:
+    """DB with schema but no seeded pets (non-existent seed config)."""
+    d = Database(tmp_path / "empty.db")
+    d.connect()
+    d.migrate(seed_config_path=tmp_path / "no_config.yaml")
+    yield d
+    d.close()
+
+
+def test_get_pets_returns_seeded_pets(db: Database) -> None:
+    result = get_pets(db=db)
     assert len(result) == 2
     names = {p["name"] for p in result}
     assert names == {"Branca", "Marrie"}
 
 
 def test_get_pets_zero_tracks_by_default(db: Database) -> None:
-    result = get_pets(request=_mock_request(), db=db)
+    result = get_pets(db=db)
     for pet in result:
         assert pet["track_count"] == 0
         assert pet["clip_count"] == 0
@@ -164,12 +158,12 @@ def test_get_pets_track_counts_updated(db: Database) -> None:
     clip_id = db.insert_clip(_clip("p1"))
     db.insert_track(clip_id=clip_id, track_id=0, identity="Branca",
                     confidence=0.9, frame_start=0, frame_end=5, pet_id=1)
-    result = get_pets(request=_mock_request(), db=db)
+    result = get_pets(db=db)
     branca = next(p for p in result if p["name"] == "Branca")
     assert branca["track_count"] == 1
     assert branca["clip_count"] == 1
 
 
-def test_get_pets_empty_config_returns_empty_list(db: Database) -> None:
-    result = get_pets(request=_mock_request({"pets": []}), db=db)
+def test_get_pets_empty_db_returns_empty_list(empty_db: Database) -> None:
+    result = get_pets(db=empty_db)
     assert result == []
