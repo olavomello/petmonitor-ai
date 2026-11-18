@@ -31,6 +31,20 @@ def get_status(db: Database = Depends(get_db)) -> dict:
     return stats
 
 
+@router.get("/sync/status")
+def get_sync_status() -> dict:
+    from petmonitor.sync.scheduler import status as _s
+
+    return {
+        "enabled": _s.enabled,
+        "is_syncing": _s.is_syncing,
+        "last_synced_at": _s.last_synced_at.isoformat() if _s.last_synced_at else None,
+        "last_new_clips": _s.last_new_clips,
+        "last_detections": _s.last_detections,
+        "last_errors": _s.last_errors,
+    }
+
+
 @router.get("/clips")
 def list_clips(
     limit: int = 50,
