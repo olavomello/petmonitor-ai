@@ -8,6 +8,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from starlette.responses import Response
 
 router = APIRouter(prefix="/blink")
 
@@ -131,3 +132,83 @@ async def verify_blink_auth(body: AuthVerifyBody) -> dict:  # pragma: no cover
         raise
     except Exception as exc:
         raise HTTPException(status_code=401, detail="2FA verification failed") from exc
+
+
+@router.get("/snapshot/{camera_name}")
+async def get_blink_snapshot(camera_name: str):
+    """Return the most recent JPEG thumbnail for a Blink camera.
+
+    Uses saved credentials to authenticate and fetches the camera's current
+    cached thumbnail from the Blink CDN. Does not trigger a new capture,
+    so it is safe to call every 10–15 s without draining the camera battery.
+    """
+    if not _CREDS_FILE.exists():
+        raise HTTPException(status_code=404, detail="Blink not configured")
+
+    try:
+        saved: dict = json.loads(_CREDS_FILE.read_text(encoding="utf-8")) or {}
+    except Exception:
+        raise HTTPException(status_code=503, detail="Invalid Blink credentials file")
+
+    if not saved:
+        raise HTTPException(status_code=503, detail="Empty Blink credentials file")
+
+    try:  # pragma: no cover
+        import aiohttp as _aio
+        from blinkpy.auth import Auth
+        from blinkpy.blinkpy import Blink
+    except ImportError:  # pragma: no cover
+        raise HTTPException(status_code=500, detail="blinkpy not installed")
+
+    # pragma: no cover — requires real Blink credentials and network access
+    blink = Blink(session=None)  # type: ignore[call-arg]
+    blink.auth = Auth(saved)
+    try:
+        await blink.start()
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Blink authentication failed") from exc
+
+    # Find camera — exact match first, then case-insensitive
+    cam = (blink.cameras or {}).get(camera_name)
+    if cam is None:
+        for name, c in (blink.cameras or {}).items():
+            if name.lower() == camera_name.lower():
+                cam = c
+                break
+    if cam is None:
+        raise HTTPException(
+            status_code=404, detail=f"Camera '{camera_name}' not found in Blink account"
+        )
+
+    thumb_url: str = getattr(cam, "thumbnail", "") or ""
+    if not thumb_url:
+        raise HTTPException(status_code=404, detail="No thumbnail available for this camera")
+    if thumb_url.startswith("//"):
+        thumb_url = "https:" + thumb_url
+    elif not thumb_url.startswith("http"):
+        thumb_url = "https://rest-prod.immedia-semi.com" + thumb_url
+
+    # Download thumbnail — Blink CDN may require the session auth token
+    token: str = saved.get("token", "")
+    try:
+        async with _aio.ClientSession() as _sess:
+            hdrs = {"TOKEN_AUTH": token} if token else {}
+            async with _sess.get(thumb_url, headers=hdrs, ssl=True) as resp:
+                if resp.status != 200:
+                    raise HTTPException(
+                        status_code=503, detail=f"Blink CDN returned HTTP {resp.status}"
+                    )
+                content = await resp.read()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Failed to download snapshot") from exc
+
+    if not content:
+        raise HTTPException(status_code=503, detail="Empty snapshot received")
+
+    return Response(
+        content=content,
+        media_type="image/jpeg",
+        headers={"Cache-Control": "no-cache, no-store"},
+    )

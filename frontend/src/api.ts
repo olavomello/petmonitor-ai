@@ -206,6 +206,7 @@ export const api = {
   blinkAuthVerify: (code: string) =>
     request<{ status: string }>("POST", "/blink/auth/verify", { code }),
   clipThumbnailUrl: (clipId: number) => `${BASE}/clips/${clipId}/thumbnail`,
+  blinkSnapshotUrl: (cameraName: string) => `${BASE}/blink/snapshot/${encodeURIComponent(cameraName)}`,
   clipDetections: (clipId: number) => get<Detection[]>(`/clips/${clipId}/detections`),
   clipVideoUrl: (clipId: number) => `${BASE}/clips/${clipId}/video`,
   trajectories: (identity: string) => get<TrajectoriesResponse>(`/trajectories/${encodeURIComponent(identity)}`),

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Detection, type Pet, type StatusResponse } from "../api";
+import { api, type ActivityResponse, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Detection, type HeatmapResponse, type Pet, type StatusResponse } from "../api";
 import type { View } from "../nav";
 
 const PET_COLOR: Record<string, string> = {
@@ -130,22 +130,46 @@ function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; bli
   const [detections, setDetections] = useState<Detection[]>([]);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
+  const [snapSrc, setSnapSrc] = useState<string | null>(null);
+  const [snapFailed, setSnapFailed] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const thumbUrl = latest ? api.clipThumbnailUrl(latest.id) : null;
+  const snapIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const useSnapshot = blinkConnected && !!cameraName;
+
+  // Snapshot polling — refresh every 15 s when Blink is connected
+  useEffect(() => {
+    if (snapIntervalRef.current) { clearInterval(snapIntervalRef.current); snapIntervalRef.current = null; }
+    if (!useSnapshot) { setSnapSrc(null); return; }
+    const refresh = () => { setSnapFailed(false); setSnapSrc(`${api.blinkSnapshotUrl(cameraName)}?t=${Date.now()}`); };
+    refresh();
+    snapIntervalRef.current = setInterval(refresh, 15_000);
+    return () => { if (snapIntervalRef.current) { clearInterval(snapIntervalRef.current); snapIntervalRef.current = null; } };
+  }, [useSnapshot, cameraName]);
+
+  // Load detections for the latest clip (clip mode only)
   useEffect(() => {
     setDetections([]);
     setImgLoaded(false);
     setThumbFailed(false);
-    if (!latest || latest.detection_count === 0) return;
+    if (useSnapshot || !latest || latest.detection_count === 0) return;
     api.clipDetections(latest.id).then(setDetections).catch(() => {});
-  }, [latest?.id]);
+  }, [latest?.id, useSnapshot]);
 
+  // Draw bboxes (clip mode only); clear canvas in snapshot mode
   useEffect(() => {
     if (!imgLoaded || !imgRef.current || !canvasRef.current) return;
+    if (useSnapshot) {
+      canvasRef.current.getContext("2d")?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      return;
+    }
     drawBboxes(imgRef.current, canvasRef.current, detections);
-  }, [imgLoaded, detections]);
+  }, [imgLoaded, detections, useSnapshot]);
+
+  const imgSrc = useSnapshot
+    ? (snapFailed ? null : snapSrc)
+    : (thumbFailed ? null : (latest ? api.clipThumbnailUrl(latest.id) : null));
 
   return (
     <div style={{
@@ -174,27 +198,30 @@ function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; bli
           <span style={{
             fontSize: "0.62rem", padding: "0.12rem 0.45rem",
             borderRadius: 999, fontWeight: 600,
-            background: "rgba(100,116,139,0.18)", color: "var(--text-muted)",
-          }}>CLIP</span>
+            background: useSnapshot ? "rgba(0,180,216,0.18)" : "rgba(100,116,139,0.18)",
+            color: useSnapshot ? "var(--teal)" : "var(--text-muted)",
+          }}>
+            {useSnapshot ? "SNAP" : "CLIP"}
+          </span>
         </div>
         {cameraName && <span style={{ fontSize: "0.74rem", color: "var(--text-muted)" }}>{cameraName}</span>}
       </div>
 
-      {/* Feed area — thumbnail with bbox overlay */}
+      {/* Feed area */}
       <div style={{
         flex: 1, background: "#080f1a",
         position: "relative",
         minHeight: 180,
         overflow: "hidden",
       }}>
-        {thumbUrl && !thumbFailed ? (
+        {imgSrc ? (
           <>
             <img
               ref={imgRef}
-              src={thumbUrl}
-              alt="Latest clip"
+              src={imgSrc}
+              alt={useSnapshot ? "Snapshot" : "Latest clip"}
               onLoad={() => setImgLoaded(true)}
-              onError={() => setThumbFailed(true)}
+              onError={() => { if (useSnapshot) setSnapFailed(true); else setThumbFailed(true); }}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", minHeight: 180 }}
             />
             <canvas
@@ -218,8 +245,9 @@ function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; bli
             </span>
           </div>
         )}
-        {/* Detection identity badges */}
-        {detections.length > 0 && (
+
+        {/* Detection badges — clip mode only */}
+        {!useSnapshot && detections.length > 0 && (
           <div style={{
             position: "absolute", bottom: 8, left: 8,
             display: "flex", gap: "0.3rem", flexWrap: "wrap",
@@ -236,141 +264,360 @@ function CameraPanel({ clips, blinkConnected, cameraName }: { clips: Clip[]; bli
             ))}
           </div>
         )}
+
+        {/* Snapshot refresh indicator */}
+        {useSnapshot && snapSrc && (
+          <div style={{
+            position: "absolute", top: 8, right: 8,
+            display: "flex", alignItems: "center", gap: "0.3rem",
+            background: "rgba(0,0,0,0.55)", borderRadius: 999,
+            padding: "0.15rem 0.55rem",
+          }}>
+            <span className="spinner" style={{ color: "var(--teal)", width: "0.65rem", height: "0.65rem", borderWidth: "1.5px" }} />
+            <span style={{ fontSize: "0.58rem", color: "var(--teal)", fontWeight: 600 }}>~15s</span>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
-      {latest && (
+      {useSnapshot ? (
         <div style={{
           padding: "0.55rem 1rem",
           borderTop: "1px solid var(--border)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          fontSize: "0.72rem",
-          color: "var(--text-muted)",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          fontSize: "0.72rem", color: "var(--text-muted)",
+        }}>
+          <span>Snapshot polling</span>
+          <span>~15s delay · not live video</span>
+        </div>
+      ) : latest ? (
+        <div style={{
+          padding: "0.55rem 1rem",
+          borderTop: "1px solid var(--border)",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          fontSize: "0.72rem", color: "var(--text-muted)",
         }}>
           <span>{latest.detection_count} detections · {latest.track_count} tracks</span>
           <span>{relativeTime(latest.capture_at ?? latest.ingested_at)}</span>
         </div>
+      ) : null}
+    </div>
+  );
+}
+
+// --- Atividades do dia (Daily Activity bar chart) ---
+
+const ACTIVITIES = [
+  {
+    key: "stationary", label: "Repouso",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="9" width="14" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.3" />
+        <rect x="4" y="6" width="4" height="3" rx="1" stroke="currentColor" strokeWidth="1.2" />
+        <line x1="2" y1="15" x2="4" y2="15" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <line x1="14" y1="15" x2="16" y2="15" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "moving", label: "Movimento",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="9" cy="4" r="1.8" fill="currentColor" opacity="0.85" />
+        <path d="M9 6.5v5M6.5 9l2.5 1.5 2.5-1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="M7 13.5L5.5 16M11 13.5l1.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "unknown", label: "Brincando",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="6" width="14" height="8" rx="2" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="6" cy="10" r="1.2" fill="currentColor" opacity="0.75" />
+        <circle cx="12" cy="10" r="1.2" fill="currentColor" opacity="0.75" />
+        <path d="M8 8.5h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M7 3l1.5 3M11 3l-1.5 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "not_visible", label: "Em pé",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <ellipse cx="9" cy="7" rx="3" ry="2" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M4 15c0-3 2-5 5-5s5 2 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+        <circle cx="7" cy="6.5" r="0.7" fill="currentColor" />
+        <circle cx="11" cy="6.5" r="0.7" fill="currentColor" />
+      </svg>
+    ),
+  },
+];
+
+function thermalColor(ratio: number): string {
+  const r = Math.round(ratio < 0.5 ? 0 : (ratio - 0.5) / 0.5 * 255);
+  const g = Math.round(ratio < 0.25 ? ratio / 0.25 * 255 : ratio < 0.75 ? 255 : (1 - ratio) / 0.25 * 255);
+  const b = Math.round(ratio < 0.5 ? (0.5 - ratio) / 0.5 * 255 : 0);
+  const alpha = 0.08 + ratio * 0.75;
+  return `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
+}
+
+function AtividadesDodia({ pets }: { pets: Pet[] }) {
+  const [activity, setActivity] = useState<ActivityResponse | null>(null);
+
+  useEffect(() => {
+    api.activity().then(setActivity).catch(() => {});
+  }, []);
+
+  const summary = activity?.summary ?? {};
+  const petNames = pets.map((p) => p.name).filter((n) => summary[n]);
+  const PET_COLORS: Record<string, string> = { Branca: "#00b4d8", Marrie: "#a78bfa" };
+
+  // Compute percentage per pet per activity
+  const pcts: Record<string, Record<string, number>> = {};
+  for (const name of petNames) {
+    const counts = summary[name] ?? {};
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    pcts[name] = {};
+    for (const act of ACTIVITIES) {
+      pcts[name][act.key] = total > 0 ? Math.round(((counts[act.key] ?? 0) / total) * 100) : 0;
+    }
+  }
+
+  const allPctVals = Object.values(pcts).flatMap((p) => Object.values(p));
+  const yMax = allPctVals.length > 0 ? Math.max(80, ...allPctVals) : 80;
+  const ySteps = [0, Math.round(yMax * 0.25), Math.round(yMax * 0.5), Math.round(yMax * 0.75), yMax];
+
+  const CHART_H = 148;
+  const BAR_W = 12;
+  const BAR_GAP = 3;
+
+  return (
+    <div style={{
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: "var(--radius)", padding: "1rem",
+      display: "flex", flexDirection: "column", gap: "0.75rem",
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Atividades do dia</span>
+        <div style={{ display: "flex", gap: "0.65rem" }}>
+          {petNames.map((name) => (
+            <div key={name} style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: PET_COLORS[name] ?? "#94a3b8", display: "inline-block" }} />
+              <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>{name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{ display: "flex", gap: "0.25rem" }}>
+        {/* Y axis */}
+        <div style={{ width: 32, display: "flex", flexDirection: "column-reverse", justifyContent: "space-between", paddingBottom: 36 }}>
+          {ySteps.map((v) => (
+            <span key={v} style={{ fontSize: "0.62rem", color: "var(--text-muted)", lineHeight: 1 }}>{v}%</span>
+          ))}
+        </div>
+
+        {/* Grid + bars + labels */}
+        <div style={{ flex: 1 }}>
+          {/* Grid lines + bars container */}
+          <div style={{ position: "relative", height: CHART_H }}>
+            {/* Horizontal grid lines */}
+            {ySteps.map((_, i) => (
+              <div key={i} style={{
+                position: "absolute",
+                bottom: `${(i / (ySteps.length - 1)) * 100}%`,
+                left: 0, right: 0, height: 1,
+                background: "var(--border)", opacity: 0.6,
+              }} />
+            ))}
+            {/* Activity groups */}
+            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end" }}>
+              {ACTIVITIES.map((act) => (
+                <div key={act.key} style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "flex-end", gap: BAR_GAP }}>
+                  {petNames.length === 0 ? (
+                    <div style={{ width: BAR_W * 2 + BAR_GAP, height: 2, background: "var(--border)", borderRadius: "2px 2px 0 0" }} />
+                  ) : petNames.map((name) => {
+                    const pct = pcts[name]?.[act.key] ?? 0;
+                    const h = Math.max(2, (pct / yMax) * CHART_H);
+                    return (
+                      <div key={name} style={{
+                        width: BAR_W,
+                        height: h,
+                        background: PET_COLORS[name] ?? "#94a3b8",
+                        borderRadius: "2px 2px 0 0",
+                        transition: "height 0.5s ease",
+                      }} />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* X axis: icons + labels */}
+          <div style={{ display: "flex", paddingTop: "0.4rem" }}>
+            {ACTIVITIES.map((act) => (
+              <div key={act.key} style={{
+                flex: 1, display: "flex", flexDirection: "column",
+                alignItems: "center", gap: "0.2rem",
+                color: "var(--text-muted)", fontSize: "0.65rem",
+              }}>
+                {act.icon}
+                {act.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {!activity && (
+        <p style={{ fontSize: "0.68rem", color: "var(--text-muted)", margin: 0 }}>
+          Analytics available after processing clips
+        </p>
       )}
     </div>
   );
 }
 
-const TIME_SLOTS = ["00h", "03h", "06h", "09h", "12h", "15h", "18h", "21h"];
+// --- Mapa de circulação (Heatmap panel) ---
 
-function ActivityChart({ pets }: { pets: Pet[] }) {
-  const byName: Record<string, Pet> = {};
-  for (const p of pets) byName[p.name] = p;
-  const branca = byName["Branca"];
-  const marrie = byName["Marrie"];
+function MapaDeCirculacao({ pets, bgUrl, onNavigate }: { pets: Pet[]; bgUrl: string | null; onNavigate: () => void }) {
+  const [heatmaps, setHeatmaps] = useState<Record<string, HeatmapResponse>>({});
+  const [visible, setVisible] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const init: Record<string, boolean> = {};
+    for (const p of pets) init[p.name] = true;
+    setVisible(init);
+  }, [pets]);
+
+  useEffect(() => {
+    if (pets.length === 0) return;
+    for (const p of pets) {
+      api.heatmap(p.name).then((r) => {
+        setHeatmaps((prev) => ({ ...prev, [p.name]: r }));
+      }).catch(() => {});
+    }
+  }, [pets]);
+
+  const PET_COLORS: Record<string, string> = { Branca: "#00b4d8", Marrie: "#a78bfa" };
+
+  // Combine grids for visible pets
+  const visiblePets = pets.filter((p) => visible[p.name] && heatmaps[p.name]);
+  const combined = (() => {
+    if (visiblePets.length === 0) return null;
+    const first = heatmaps[visiblePets[0].name];
+    const rows = first.grid_h, cols = first.grid_w;
+    const combined: number[][] = Array.from({ length: rows }, () => new Array(cols).fill(0));
+    for (const p of visiblePets) {
+      const g = heatmaps[p.name].grid;
+      for (let r = 0; r < rows; r++)
+        for (let c = 0; c < cols; c++)
+          combined[r][c] += g[r]?.[c] ?? 0;
+    }
+    return { grid: combined, rows, cols };
+  })();
+
+  const combinedMax = combined ? Math.max(1, ...combined.grid.flat()) : 1;
 
   return (
     <div style={{
-      background: "var(--bg-card)",
-      border: "1px solid var(--border)",
-      borderRadius: "var(--radius)",
-      padding: "1rem",
-      display: "flex",
-      flexDirection: "column",
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: "var(--radius)", overflow: "hidden",
+      display: "flex", flexDirection: "column",
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Daily Activity</span>
-        <div style={{ display: "flex", gap: "0.65rem" }}>
-          {branca && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--teal)", display: "inline-block" }} />
-              <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>Branca</span>
-            </div>
+      {/* Header */}
+      <div style={{ padding: "0.75rem 1rem", borderBottom: "1px solid var(--border)" }}>
+        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Mapa de circulação (Heatmap)</span>
+      </div>
+
+      {/* Body */}
+      <div style={{ display: "flex", flex: 1 }}>
+        {/* Map area */}
+        <div
+          style={{ flex: 1, position: "relative", minHeight: 160, cursor: "pointer" }}
+          onClick={onNavigate}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onNavigate(); }}
+        >
+          {bgUrl ? (
+            <img
+              src={bgUrl}
+              alt="Room"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <div style={{ position: "absolute", inset: 0, background: "#080f1a" }} />
           )}
-          {marrie && (
-            <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--purple)", display: "inline-block" }} />
-              <span style={{ fontSize: "0.72rem", color: "var(--text-secondary)" }}>Marrie</span>
+
+          {/* Heatmap SVG overlay */}
+          {combined && (
+            <svg
+              viewBox={`0 0 ${combined.cols} ${combined.rows}`}
+              width="100%" height="100%"
+              style={{ position: "absolute", inset: 0, display: "block" }}
+              preserveAspectRatio="none"
+            >
+              {combined.grid.map((row, r) =>
+                row.map((count, c) => {
+                  if (count === 0) return null;
+                  return (
+                    <rect
+                      key={`${r}-${c}`}
+                      x={c} y={r} width={1} height={1}
+                      fill={thermalColor(count / combinedMax)}
+                    />
+                  );
+                })
+              )}
+            </svg>
+          )}
+
+          {!combined && (
+            <div style={{
+              position: "absolute", inset: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <span style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.5)" }}>Open full heatmap →</span>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Bars */}
-      <div style={{ display: "flex", alignItems: "flex-end", gap: "0.4rem", flex: 1, minHeight: 72 }}>
-        {TIME_SLOTS.map((slot) => (
-          <div key={slot} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem" }}>
-            <div style={{ flex: 1, width: "100%", display: "flex", alignItems: "flex-end", gap: 2, justifyContent: "center" }}>
-              <div style={{ width: 7, height: 2, background: "var(--teal)", borderRadius: "2px 2px 0 0", opacity: 0.25 }} />
-              <div style={{ width: 7, height: 2, background: "var(--purple)", borderRadius: "2px 2px 0 0", opacity: 0.25 }} />
-            </div>
+        {/* Controls sidebar */}
+        <div style={{
+          width: 100, flexShrink: 0,
+          borderLeft: "1px solid var(--border)",
+          padding: "0.75rem",
+          display: "flex", flexDirection: "column", gap: "0.9rem",
+          background: "var(--bg-elevated)",
+        }}>
+          <div>
+            <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.5rem" }}>Exibir</div>
+            {pets.map((p) => (
+              <label key={p.name} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", marginBottom: "0.4rem" }}>
+                <input
+                  type="checkbox"
+                  checked={visible[p.name] ?? true}
+                  onChange={(e) => setVisible((prev) => ({ ...prev, [p.name]: e.target.checked }))}
+                  style={{ accentColor: PET_COLORS[p.name] ?? "var(--teal)", width: 13, height: 13 }}
+                />
+                <span style={{ fontSize: "0.75rem", color: PET_COLORS[p.name] ?? "var(--text-primary)", fontWeight: 500 }}>{p.name}</span>
+              </label>
+            ))}
           </div>
-        ))}
-      </div>
-
-      {/* Time axis */}
-      <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.3rem" }}>
-        {TIME_SLOTS.map((slot) => (
-          <span key={slot} style={{ flex: 1, fontSize: "0.58rem", color: "var(--text-muted)", textAlign: "center" }}>{slot}</span>
-        ))}
-      </div>
-
-      <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: "0.6rem" }}>
-        Analytics available after processing clips
-      </p>
-    </div>
-  );
-}
-
-function HeatmapPanel({ onNavigate }: { onNavigate: () => void }) {
-  return (
-    <div style={{
-      background: "var(--bg-card)",
-      border: "1px solid var(--border)",
-      borderRadius: "var(--radius)",
-      padding: "1rem",
-      display: "flex",
-      flexDirection: "column",
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-        <span style={{ fontWeight: 600, fontSize: "0.88rem" }}>Movement Map</span>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal)", display: "inline-block" }} />
-            <span style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Branca</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--purple)", display: "inline-block" }} />
-            <span style={{ fontSize: "0.68rem", color: "var(--text-secondary)" }}>Marrie</span>
+          <div>
+            <div style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.4rem" }}>Intensidade</div>
+            <div style={{
+              height: 8, borderRadius: 3,
+              background: "linear-gradient(to right, rgba(0,0,255,0.7), rgba(0,255,0,0.7), rgba(255,165,0,0.9), rgba(255,0,0,1))",
+            }} />
           </div>
         </div>
-      </div>
-
-      {/* Clickable heatmap area */}
-      <div
-        onClick={onNavigate}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onNavigate(); }}
-        style={{
-          flex: 1, minHeight: 120,
-          background: "#080f1a",
-          borderRadius: "var(--radius-sm)",
-          border: "1px solid var(--border)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "0.5rem",
-          cursor: "pointer",
-        }}
-      >
-        <svg width="48" height="36" viewBox="0 0 48 36" opacity={0.18}>
-          <rect x="0.5" y="0.5" width="47" height="35" rx="2" stroke="#94a3b8" strokeWidth="0.5" fill="none" />
-          {[12, 24, 36].map((x) => (
-            <line key={`v${x}`} x1={x} y1={0} x2={x} y2={36} stroke="#94a3b8" strokeWidth="0.5" />
-          ))}
-          {[9, 18, 27].map((y) => (
-            <line key={`h${y}`} x1={0} y1={y} x2={48} y2={y} stroke="#94a3b8" strokeWidth="0.5" />
-          ))}
-        </svg>
-        <span style={{ fontSize: "0.76rem", color: "var(--text-muted)" }}>Open full heatmap →</span>
       </div>
     </div>
   );
@@ -532,6 +779,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
   const [clips, setClips] = useState<Clip[]>([]);
   const [blinkStatus, setBlinkStatus] = useState<BlinkStatus | null>(null);
   const [cameras, setCameras] = useState<BlinkCamerasResponse | null>(null);
+  const [bgUrl, setBgUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -547,6 +795,9 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
       .then(([s, p, c, bs, cams]) => {
         setStatus(s); setPets(p); setClips(c);
         setBlinkStatus(bs); setCameras(cams);
+        const camName = cams?.cameras[0];
+        if (camName) setBgUrl(`${api.blinkSnapshotUrl(camName)}?t=${Date.now()}`);
+        else if (c[0]) setBgUrl(api.clipThumbnailUrl(c[0].id));
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
@@ -633,8 +884,8 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
 
       {/* Mid section: activity + heatmap */}
       <div className="db-mid">
-        <ActivityChart pets={pets} />
-        <HeatmapPanel onNavigate={() => onNavigate("heatmap")} />
+        <AtividadesDodia pets={pets} />
+        <MapaDeCirculacao pets={pets} bgUrl={bgUrl} onNavigate={() => onNavigate("heatmap")} />
       </div>
 
       {/* Recent events */}
