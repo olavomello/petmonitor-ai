@@ -28,9 +28,18 @@ status = SyncStatus()
 
 async def run_once(cfg: dict) -> None:
     """Run a single sync cycle. Updates *status* in place. Never raises."""
+    import os
+
+    from dotenv import load_dotenv
+
     creds_file = Path(cfg.get("blink", {}).get("credentials_file", "data/.blink_creds.json"))
     if not creds_file.exists():
         logger.debug("auto-sync: credentials file absent, skipping")
+        return
+
+    load_dotenv()
+    if not os.environ.get("BLINK_USERNAME"):
+        logger.debug("auto-sync: BLINK_USERNAME not set, skipping")
         return
 
     status.is_syncing = True

@@ -158,6 +158,15 @@ export interface HeatmapResponse {
   note: string;
 }
 
+export interface SyncStatusResponse {
+  enabled: boolean;
+  is_syncing: boolean;
+  last_synced_at: string | null;
+  last_new_clips: number;
+  last_detections: number;
+  last_errors: string[];
+}
+
 async function apiFetch<T>(
   method: string,
   path: string,
@@ -210,6 +219,7 @@ export const api = {
   clipDetections: (clipId: number) => get<Detection[]>(`/clips/${clipId}/detections`),
   clipVideoUrl: (clipId: number) => `${BASE}/clips/${clipId}/video`,
   trajectories: (identity: string) => get<TrajectoriesResponse>(`/trajectories/${encodeURIComponent(identity)}`),
+  syncStatus: () => get<SyncStatusResponse>("/sync/status"),
   petsCreate: (body: PetCreate) => request<Pet>("POST", "/pets", body),
   petsUpdate: (id: number, body: Partial<PetCreate>) => apiFetch<Pet>("PUT", `/pets/${id}`, { body }),
   petsDelete: (id: number) => apiFetch<void>("DELETE", `/pets/${id}`),

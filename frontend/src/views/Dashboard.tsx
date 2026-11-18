@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api, type ActivityResponse, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Detection, type HeatmapResponse, type Pet, type StatusResponse } from "../api";
+import { api, type ActivityResponse, type BlinkCamerasResponse, type BlinkStatus, type Clip, type Detection, type HeatmapResponse, type Pet, type StatusResponse, type SyncStatusResponse } from "../api";
 import type { View } from "../nav";
 
 const PET_COLOR: Record<string, string> = { Branca: "#00b4d8", Marrie: "#a78bfa" };
@@ -532,6 +532,32 @@ function RecentEvents({ clips }: { clips: Clip[] }) {
   );
 }
 
+function SyncChip({ sync }: { sync: SyncStatusResponse }) {
+  const color = sync.last_errors.length > 0 ? "var(--danger)" : sync.is_syncing ? "#00b4d8" : "var(--text-muted)";
+  const label = sync.is_syncing
+    ? "Sincronizando…"
+    : sync.last_synced_at
+    ? `Sincronizado ${relativeTime(sync.last_synced_at)}`
+    : "Aguardando sync";
+
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: "0.35rem",
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: 999, padding: "0.22rem 0.6rem",
+      fontSize: "0.7rem", color,
+    }}>
+      <svg width="11" height="11" viewBox="0 0 14 14" fill="none"
+        style={{ animation: sync.is_syncing ? "spin 1s linear infinite" : undefined }}
+      >
+        <path d="M7 2a5 5 0 1 1-4.33 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M2 2v3h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {label}
+    </div>
+  );
+}
+
 function DaySummary({ status, activity }: { status: StatusResponse; activity: ActivityResponse | null }) {
   const summary = activity?.summary ?? {};
   const maxFrames = Object.values(summary).reduce((max, ps) => {
@@ -603,6 +629,7 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
   const [bgUrl, setBgUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncStatus, setSyncStatus] = useState<SyncStatusResponse | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -623,6 +650,13 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
       })
       .catch((e) => setError(String(e)))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const poll = () => api.syncStatus().then(setSyncStatus).catch(() => {});
+    poll();
+    const id = setInterval(poll, 30_000);
+    return () => clearInterval(id);
   }, []);
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long" });
@@ -648,9 +682,12 @@ export default function Dashboard({ onNavigate }: { onNavigate: (v: View) => voi
 
   return (
     <div>
-      <div style={{ marginBottom: "1.25rem" }}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, lineHeight: 1 }}>Dashboard</h1>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.3rem", textTransform: "capitalize" }}>{today}</p>
+      <div style={{ marginBottom: "1.25rem", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div>
+          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, lineHeight: 1 }}>Dashboard</h1>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.3rem", textTransform: "capitalize" }}>{today}</p>
+        </div>
+        {syncStatus && <SyncChip sync={syncStatus} />}
       </div>
 
       <BlinkBanner blinkStatus={blinkStatus} onConfigure={() => onNavigate("settings")} />
