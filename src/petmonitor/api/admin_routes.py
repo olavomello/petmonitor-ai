@@ -482,7 +482,8 @@ def activate_run(run_name: str) -> dict:
 
     models_dir.mkdir(parents=True, exist_ok=True)
     dest = models_dir / "best.pt"
-    shutil.copy2(str(weights_path), str(dest))
+    if weights_path.resolve() != dest.resolve():
+        shutil.copy2(str(weights_path), str(dest))
 
     return {
         "activated": run_name,
